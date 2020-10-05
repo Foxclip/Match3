@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System.Diagnostics;
 
 namespace Match3
 {
@@ -61,12 +62,18 @@ namespace Match3
 
         protected override void Update(GameTime gameTime)
         {
-            if(GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+            // Обработка клавиатуры
+            KeyboardState keyboardState = Keyboard.GetState();
+            if(GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Escape))
             {
                 Exit();
             }
-
-            // TODO: Add your update logic here
+            if(keyboardState.IsKeyDown(Keys.Space))
+            {
+                gameBoard.CheckCombo(false);
+                gameBoard.CheckCombo(true);
+                Debug.WriteLine("SPACE");
+            }
 
             base.Update(gameTime);
         }
