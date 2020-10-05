@@ -67,10 +67,18 @@ namespace Match3
         }
 
         /// <summary>
+        /// Возвращает объект, находящийся в клетке игрового поля или null если там ничего нет.
+        /// </summary>
+        public GameBoardObject GetObjectAtPosition(int x, int y)
+        {
+            return GetObjectAtPosition(new Vector2Int(x, y));
+        }
+
+        /// <summary>
         /// Проверяет, есть ли на доске несколько элементов, стоящих в ряд.
         /// </summary>
         /// <param name="vertical">Вертикальное направление, иначе горизонтальное.</param>
-        public void CheckCombo(bool vertical)
+        public bool CheckCombo(bool vertical)
         {
             string directionString = vertical ? "Вертикальное" : "Горизонтальное";
 
@@ -83,10 +91,10 @@ namespace Match3
                 Type comboType = null;
                 for(int j = 0; j < 8; j++)
                 {
-                    Vector2Int getPos = vertical ? new Vector2Int(i, j) : new Vector2Int(j, i);
-                    GameBoardObject obj = GetObjectAtPosition(getPos);
+                    GameBoardObject obj = vertical ? GetObjectAtPosition(i, j) : GetObjectAtPosition(j, i);
                     if(obj is null)
                     {
+                        comboType = null;
                         continue;
                     }
                     if(obj.GetType() == comboType)
@@ -115,6 +123,25 @@ namespace Match3
             // Удаление объектов
             List<GameBoardObject> objectsToDelete = allComboList.SelectMany(tempList => tempList).ToList();
             objectList.RemoveAll(obj => objectsToDelete.Contains(obj));
+
+            // Сдвигаем элементы сверху
+            for(int x = 0; x < 8; x++)
+            {
+                int objectsUnder = 0;
+                for(int y = 7; y >= 0; y--)
+                {
+                    GameBoardObject gameBoardObject = GetObjectAtPosition(x, y);
+                    if(gameBoardObject != null)
+                    {
+                        Vector2Int newPos = new Vector2Int(gameBoardObject.pos.x, 7 - objectsUnder);
+                        Debug.WriteLine($"Moving {gameBoardObject.pos} to {newPos}");
+                        gameBoardObject.pos = newPos;
+                        objectsUnder++;
+                    }
+                }
+            }
+
+            return allComboList.Count > 0;
         }
     }
 }
