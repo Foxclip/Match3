@@ -25,6 +25,9 @@ namespace Match3
         public static float globalSpriteScale = 0.9f;
         // Сдвиг игрового поля в пикселях, чтобы оно было не с краю
         public static Vector2 gameBoardOffset = new Vector2(45f, 45f);
+        // Размеры окна
+        public static int width = 615;
+        public static int height = 615;
 
         public Game1()
         {
@@ -35,6 +38,9 @@ namespace Match3
 
         protected override void Initialize()
         {
+            _graphics.PreferredBackBufferWidth = width;
+            _graphics.PreferredBackBufferHeight = height;
+            _graphics.ApplyChanges();
             base.Initialize();
         }
 
