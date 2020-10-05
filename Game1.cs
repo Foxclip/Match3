@@ -30,6 +30,8 @@ namespace Match3
         public static int width = 615;
         public static int height = 615;
 
+        // Текущее и предыдущее состояния клавиатуры
+        private KeyboardState keyboardState;
         private KeyboardState previousKeyboardState;
 
         public Game1()
@@ -62,21 +64,29 @@ namespace Match3
 
         }
 
+        /// <summary>
+        /// Проверяет, была ли нажата клавиша.
+        /// </summary>
+        /// <param name="key">Клавиша клавиатуры.</param>
+        private bool CheckKeyPress(Keys key)
+        {
+            return keyboardState.IsKeyDown(key) && !previousKeyboardState.IsKeyDown(key);
+        }
+
         protected override void Update(GameTime gameTime)
         {
             // Обработка клавиатуры
-            KeyboardState keyboardState = Keyboard.GetState();
+            keyboardState = Keyboard.GetState();
             if(GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Escape))
             {
                 Exit();
             }
-            if(keyboardState.IsKeyDown(Keys.Space) && !previousKeyboardState.IsKeyDown(Keys.Space))
+            if(CheckKeyPress(Keys.Space))
             {
                 gameBoard.CheckCombo(false);
                 gameBoard.CheckCombo(true);
                 Debug.WriteLine("SPACE");
             }
-
             // Сохраняем состояние клавиатуры
             previousKeyboardState = keyboardState;
 
