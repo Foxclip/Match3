@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 
 namespace Match3
@@ -72,6 +73,8 @@ namespace Match3
         public void CheckCombo(bool vertical)
         {
             string directionString = vertical ? "Вертикальное" : "Горизонтальное";
+
+            // Определение комбо
             List<List<GameBoardObject>> allComboList = new List<List<GameBoardObject>>();
             List<GameBoardObject> tempComboList = new List<GameBoardObject>();
             for(int i = 0; i < 8; i++)
@@ -82,6 +85,10 @@ namespace Match3
                 {
                     Vector2Int getPos = vertical ? new Vector2Int(i, j) : new Vector2Int(j, i);
                     GameBoardObject obj = GetObjectAtPosition(getPos);
+                    if(obj is null)
+                    {
+                        continue;
+                    }
                     if(obj.GetType() == comboType)
                     {
                         tempComboList.Add(obj);
@@ -90,7 +97,7 @@ namespace Match3
                     {
                         if(tempComboList.Count >= 3)
                         {
-                            allComboList.Add(tempComboList);
+                            allComboList.Add(new List<GameBoardObject>(tempComboList));
                             Debug.WriteLine($"{directionString} комбо {comboType} x{tempComboList.Count}");
                         }
                         tempComboList.Clear();
@@ -100,10 +107,14 @@ namespace Match3
                 }
                 if(tempComboList.Count >= 3)
                 {
-                    allComboList.Add(tempComboList);
+                    allComboList.Add(new List<GameBoardObject>(tempComboList));
                     Debug.WriteLine($"{directionString} комбо {comboType} x{tempComboList.Count}");
                 }
             }
+
+            // Удаление объектов
+            List<GameBoardObject> objectsToDelete = allComboList.SelectMany(tempList => tempList).ToList();
+            objectList.RemoveAll(obj => objectsToDelete.Contains(obj));
         }
     }
 }
