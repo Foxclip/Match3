@@ -29,19 +29,29 @@ namespace Match3
                 for(int y = 0; y < 8; y++)
                 {
                     Vector2Int pos = new Vector2Int(x, y);
-                    int randomNumber = random.Next(5);
-                    GameBoardObject newGameBoardObject = null;
-                    switch(randomNumber)
-                    {
-                        case 0: newGameBoardObject = new SquareObject(pos);   break;
-                        case 1: newGameBoardObject = new CircleObject(pos);   break;
-                        case 2: newGameBoardObject = new TriangleObject(pos); break;
-                        case 3: newGameBoardObject = new HexagonObject(pos);  break;
-                        case 4: newGameBoardObject = new DiamondObject(pos);  break;
-                    }
-                    objectList.Add(newGameBoardObject);
+                    GameBoardObject randomObject = CreateRandomElement(pos);
+                    objectList.Add(randomObject);
                 }
             }
+        }
+
+        /// <summary>
+        /// Создает случайный элемент.
+        /// </summary>
+        /// <param name="pos">Позиция объекта на игровом поле.</param>
+        public GameBoardObject CreateRandomElement(Vector2Int pos)
+        {
+            int randomNumber = random.Next(5);
+            GameBoardObject newGameBoardObject = null;
+            switch(randomNumber)
+            {
+                case 0: newGameBoardObject = new SquareObject(pos); break;
+                case 1: newGameBoardObject = new CircleObject(pos); break;
+                case 2: newGameBoardObject = new TriangleObject(pos); break;
+                case 3: newGameBoardObject = new HexagonObject(pos); break;
+                case 4: newGameBoardObject = new DiamondObject(pos); break;
+            }
+            return newGameBoardObject;
         }
 
         /// <summary>
@@ -124,9 +134,9 @@ namespace Match3
             List<GameBoardObject> objectsToDelete = allComboList.SelectMany(tempList => tempList).ToList();
             objectList.RemoveAll(obj => objectsToDelete.Contains(obj));
 
-            // Сдвигаем элементы сверху
             for(int x = 0; x < 8; x++)
             {
+                // Сдвигаем элементы сверху
                 int objectsUnder = 0;
                 for(int y = 7; y >= 0; y--)
                 {
@@ -134,10 +144,21 @@ namespace Match3
                     if(gameBoardObject != null)
                     {
                         Vector2Int newPos = new Vector2Int(gameBoardObject.pos.x, 7 - objectsUnder);
-                        Debug.WriteLine($"Moving {gameBoardObject.pos} to {newPos}");
-                        gameBoardObject.pos = newPos;
+                        if(gameBoardObject.pos != newPos)
+                        {
+                            Debug.WriteLine($"Moving {gameBoardObject.pos} to {newPos}");
+                            gameBoardObject.pos = newPos;
+                        }
                         objectsUnder++;
                     }
+                }
+                // Добавляем новые элементы
+                int newElementCount = 8 - objectsUnder;
+                for(int new_i = 0; new_i < newElementCount; new_i++)
+                {
+                    Vector2Int pos = new Vector2Int(x, new_i);
+                    GameBoardObject randomObject = CreateRandomElement(pos);
+                    objectList.Add(randomObject);
                 }
             }
 
