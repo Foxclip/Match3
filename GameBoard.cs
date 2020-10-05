@@ -43,6 +43,11 @@ namespace Match3
             }
         }
 
+        /// <summary>
+        /// Возвращает объект, находящийся в клетке игрового поля или null если там ничего нет.
+        /// </summary>
+        /// <param name="pos">Клетка игрового поля.</param>
+        /// <returns></returns>
         public GameBoardObject GetObjectAtPosition(Vector2Int pos)
         {
             List<GameBoardObject> foundObjects = objectList.FindAll(obj => obj.pos == pos);

@@ -30,6 +30,8 @@ namespace Match3
         public static int width = 615;
         public static int height = 615;
 
+        private KeyboardState previousKeyboardState;
+
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -68,12 +70,15 @@ namespace Match3
             {
                 Exit();
             }
-            if(keyboardState.IsKeyDown(Keys.Space))
+            if(keyboardState.IsKeyDown(Keys.Space) && !previousKeyboardState.IsKeyDown(Keys.Space))
             {
                 gameBoard.CheckCombo(false);
                 gameBoard.CheckCombo(true);
                 Debug.WriteLine("SPACE");
             }
+
+            // Сохраняем состояние клавиатуры
+            previousKeyboardState = keyboardState;
 
             base.Update(gameTime);
         }
