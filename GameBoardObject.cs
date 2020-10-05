@@ -76,6 +76,11 @@ namespace Match3
         public Texture2D sprite;
 
         /// <summary>
+        /// Масштабирование спрайта.
+        /// </summary>
+        public float spriteScale;
+
+        /// <summary>
         /// Конструктор.
         /// </summary>
         /// <param name="pos">Начальная клетка игрового поля.</param>
@@ -91,10 +96,12 @@ namespace Match3
         {
             // Позиция спрайта на экране
             Vector2 screenPos = pos.ToVector2() * Game1.cellSize + Game1.gameBoardOffset;
+            // Центр спрайта
+            Vector2 spriteOffset = new Vector2(sprite.Width / 2, sprite.Height / 2);
             // Масштабирование спрайта
-            float spriteScale = Game1.cellSize / sprite.Width * Game1.spriteDownScale;
+            float finalSpriteScale = Game1.cellSize / sprite.Width * spriteScale * Game1.globalSpriteScale;
             // Отрисовка спрайта
-            spriteBatch.Draw(sprite, screenPos, null, Color.White, 0f, new Vector2(0, 0), spriteScale, SpriteEffects.None, 0f);
+            spriteBatch.Draw(sprite, screenPos, null, Color.White, 0f, spriteOffset, finalSpriteScale, SpriteEffects.None, 0f);
         }
     }
 
@@ -106,6 +113,7 @@ namespace Match3
         public SquareObject(Vector2Int pos) : base(pos)
         {
             sprite = Game1.squareSprite;
+            spriteScale = 0.8f;
         }
     }
 
@@ -117,6 +125,7 @@ namespace Match3
         public CircleObject(Vector2Int pos) : base(pos)
         {
             sprite = Game1.circleSprite;
+            spriteScale = 0.9f;
         }
     }
 
@@ -128,6 +137,7 @@ namespace Match3
         public TriangleObject(Vector2Int pos) : base(pos)
         {
             sprite = Game1.triangleSprite;
+            spriteScale = 0.8f;
         }
     }
 
@@ -139,6 +149,7 @@ namespace Match3
         public HexagonObject(Vector2Int pos) : base(pos)
         {
             sprite = Game1.hexagonSprite;
+            spriteScale = 0.9f;
         }
     }
 
@@ -150,6 +161,7 @@ namespace Match3
         public DiamondObject(Vector2Int pos) : base(pos)
         {
             sprite = Game1.diamondSprite;
+            spriteScale = 0.9f;
         }
     }
 }

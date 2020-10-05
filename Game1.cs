@@ -21,10 +21,10 @@ namespace Match3
 
         // Размер клетки игрового поля в пикселях
         public static float cellSize = 75f;
-        // Масштаб спрайтов в клетках, чтобы они не занимали всю клекту
-        public static float spriteDownScale = 0.9f;
+        // Масштаб спрайтов
+        public static float globalSpriteScale = 0.9f;
         // Сдвиг игрового поля в пикселях, чтобы оно было не с краю
-        public static Vector2 gameBoardOffset = new Vector2(10f, 10f);
+        public static Vector2 gameBoardOffset = new Vector2(45f, 45f);
 
         public Game1()
         {
