@@ -90,6 +90,12 @@ namespace Match3
             // Сохраняем состояние клавиатуры
             previousKeyboardState = keyboardState;
 
+            // Двигаем спрайты
+            foreach(GameBoardObject gameBoardObject in gameBoard.objectList)
+            {
+                gameBoardObject.MoveSprite();
+            }
+
             base.Update(gameTime);
         }
 

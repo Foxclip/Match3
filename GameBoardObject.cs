@@ -68,12 +68,17 @@ namespace Match3
         /// <summary>
         /// Позиция объекта на игровом поле.
         /// </summary>
-        public Vector2Int pos;
+        public Vector2Int worldPos;
 
         /// <summary>
         /// Спрайт объекта.
         /// </summary>
         public Texture2D sprite;
+
+        /// <summary>
+        /// Позиция спрайта. Если отличается от позиции объекта, спрайт начинает перемещаться в позицию объекта.
+        /// </summary>
+        public Vector2 spriteWorldPos;
 
         /// <summary>
         /// Масштабирование спрайта.
@@ -83,10 +88,27 @@ namespace Match3
         /// <summary>
         /// Конструктор.
         /// </summary>
-        /// <param name="pos">Начальная клетка игрового поля.</param>
+        /// <param name="pos">Клетка игрового поля.</param>
         public GameBoardObject(Vector2Int pos)
         {
-            this.pos = pos;
+            worldPos = pos;
+            spriteWorldPos = pos.ToVector2();
+        }
+
+        /// <summary>
+        /// Конвертирует координаты на игровом поле в экранные координаты.
+        /// </summary>
+        public Vector2 WorldToScreen(Vector2 vector)
+        {
+            return vector * Game1.cellSize + Game1.gameBoardOffset;
+        }
+
+        /// <summary>
+        /// Конвертирует координаты на игровом поле в экранные координаты.
+        /// </summary>
+        public Vector2 WorldToScreen(Vector2Int vector)
+        {
+            return vector.ToVector2() * Game1.cellSize + Game1.gameBoardOffset;
         }
 
         /// <summary>
@@ -95,13 +117,21 @@ namespace Match3
         public void Draw(SpriteBatch spriteBatch)
         {
             // Позиция спрайта на экране
-            Vector2 screenPos = pos.ToVector2() * Game1.cellSize + Game1.gameBoardOffset;
+            Vector2 spriteScreenPos = WorldToScreen(spriteWorldPos);
             // Центр спрайта
             Vector2 spriteOffset = new Vector2(sprite.Width / 2, sprite.Height / 2);
             // Масштабирование спрайта
             float finalSpriteScale = Game1.cellSize / sprite.Width * spriteScale * Game1.globalSpriteScale;
             // Отрисовка спрайта
-            spriteBatch.Draw(sprite, screenPos, null, Color.White, 0f, spriteOffset, finalSpriteScale, SpriteEffects.None, 0f);
+            spriteBatch.Draw(sprite, spriteScreenPos, null, Color.White, 0f, spriteOffset, finalSpriteScale, SpriteEffects.None, 0f);
+        }
+
+        /// <summary>
+        /// Передвигает спрайт к позиции объекта.
+        /// </summary>
+        public void MoveSprite()
+        {
+            spriteWorldPos = Vector2.Lerp(spriteWorldPos, worldPos.ToVector2(), 0.1f);
         }
     }
 

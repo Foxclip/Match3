@@ -61,7 +61,7 @@ namespace Match3
         /// <returns></returns>
         public GameBoardObject GetObjectAtPosition(Vector2Int pos)
         {
-            List<GameBoardObject> foundObjects = objectList.FindAll(obj => obj.pos == pos);
+            List<GameBoardObject> foundObjects = objectList.FindAll(obj => obj.worldPos == pos);
             if(foundObjects.Count > 1)
             {
                 throw new InvalidOperationException($"В клетке {pos} найдено объектов: {foundObjects.Count}");
@@ -143,11 +143,11 @@ namespace Match3
                     GameBoardObject gameBoardObject = GetObjectAtPosition(x, y);
                     if(gameBoardObject != null)
                     {
-                        Vector2Int newPos = new Vector2Int(gameBoardObject.pos.x, 7 - objectsUnder);
-                        if(gameBoardObject.pos != newPos)
+                        Vector2Int newPos = new Vector2Int(gameBoardObject.worldPos.x, 7 - objectsUnder);
+                        if(gameBoardObject.worldPos != newPos)
                         {
-                            Debug.WriteLine($"Moving {gameBoardObject.pos} to {newPos}");
-                            gameBoardObject.pos = newPos;
+                            Debug.WriteLine($"Moving {gameBoardObject.worldPos} to {newPos}");
+                            gameBoardObject.worldPos = newPos;
                         }
                         objectsUnder++;
                     }
