@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -29,7 +30,7 @@ namespace Match3
                 for(int y = 0; y < 8; y++)
                 {
                     Vector2Int pos = new Vector2Int(x, y);
-                    GameBoardObject randomObject = CreateRandomElement(pos);
+                    GameBoardObject randomObject = CreateRandomElement(pos, pos.ToVector2());
                     objectList.Add(randomObject);
                 }
             }
@@ -39,17 +40,17 @@ namespace Match3
         /// Создает случайный элемент.
         /// </summary>
         /// <param name="pos">Позиция объекта на игровом поле.</param>
-        public GameBoardObject CreateRandomElement(Vector2Int pos)
+        public GameBoardObject CreateRandomElement(Vector2Int pos, Vector2 spritePos)
         {
             int randomNumber = random.Next(5);
             GameBoardObject newGameBoardObject = null;
             switch(randomNumber)
             {
-                case 0: newGameBoardObject = new SquareObject(pos); break;
-                case 1: newGameBoardObject = new CircleObject(pos); break;
-                case 2: newGameBoardObject = new TriangleObject(pos); break;
-                case 3: newGameBoardObject = new HexagonObject(pos); break;
-                case 4: newGameBoardObject = new DiamondObject(pos); break;
+                case 0: newGameBoardObject = new SquareObject(pos, spritePos);   break;
+                case 1: newGameBoardObject = new CircleObject(pos, spritePos);   break;
+                case 2: newGameBoardObject = new TriangleObject(pos, spritePos); break;
+                case 3: newGameBoardObject = new HexagonObject(pos, spritePos);  break;
+                case 4: newGameBoardObject = new DiamondObject(pos, spritePos);  break;
             }
             return newGameBoardObject;
         }
@@ -157,7 +158,8 @@ namespace Match3
                 for(int new_i = 0; new_i < newElementCount; new_i++)
                 {
                     Vector2Int pos = new Vector2Int(x, new_i);
-                    GameBoardObject randomObject = CreateRandomElement(pos);
+                    Vector2 spritePos = pos.ToVector2() - new Vector2(0, newElementCount);
+                    GameBoardObject randomObject = CreateRandomElement(pos, spritePos);
                     objectList.Add(randomObject);
                 }
             }

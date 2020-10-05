@@ -43,6 +43,7 @@ namespace Match3
 
         protected override void Initialize()
         {
+            _graphics.SynchronizeWithVerticalRetrace = true;
             _graphics.PreferredBackBufferWidth = width;
             _graphics.PreferredBackBufferHeight = height;
             _graphics.ApplyChanges();

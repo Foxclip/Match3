@@ -89,10 +89,10 @@ namespace Match3
         /// Конструктор.
         /// </summary>
         /// <param name="pos">Клетка игрового поля.</param>
-        public GameBoardObject(Vector2Int pos)
+        public GameBoardObject(Vector2Int pos, Vector2 spritePos)
         {
             worldPos = pos;
-            spriteWorldPos = pos.ToVector2();
+            spriteWorldPos = spritePos;
         }
 
         /// <summary>
@@ -140,7 +140,7 @@ namespace Match3
     /// </summary>
     public class SquareObject : GameBoardObject
     {
-        public SquareObject(Vector2Int pos) : base(pos)
+        public SquareObject(Vector2Int pos, Vector2 spritePos) : base(pos, spritePos)
         {
             sprite = Game1.squareSprite;
             spriteScale = 0.8f;
@@ -152,7 +152,7 @@ namespace Match3
     /// </summary>
     public class CircleObject : GameBoardObject
     {
-        public CircleObject(Vector2Int pos) : base(pos)
+        public CircleObject(Vector2Int pos, Vector2 spritePos) : base(pos, spritePos)
         {
             sprite = Game1.circleSprite;
             spriteScale = 0.9f;
@@ -164,7 +164,7 @@ namespace Match3
     /// </summary>
     public class TriangleObject : GameBoardObject
     {
-        public TriangleObject(Vector2Int pos) : base(pos)
+        public TriangleObject(Vector2Int pos, Vector2 spritePos) : base(pos, spritePos)
         {
             sprite = Game1.triangleSprite;
             spriteScale = 0.8f;
@@ -176,7 +176,7 @@ namespace Match3
     /// </summary>
     public class HexagonObject : GameBoardObject
     {
-        public HexagonObject(Vector2Int pos) : base(pos)
+        public HexagonObject(Vector2Int pos, Vector2 spritePos) : base(pos, spritePos)
         {
             sprite = Game1.hexagonSprite;
             spriteScale = 0.9f;
@@ -188,7 +188,7 @@ namespace Match3
     /// </summary>
     public class DiamondObject : GameBoardObject
     {
-        public DiamondObject(Vector2Int pos) : base(pos)
+        public DiamondObject(Vector2Int pos, Vector2 spritePos) : base(pos, spritePos)
         {
             sprite = Game1.diamondSprite;
             spriteScale = 0.9f;
