@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using ComboList = System.Collections.Generic.List<System.Collections.Generic.List<Match3.GameBoardObject>>;
 
@@ -25,10 +26,61 @@ namespace Match3
         public readonly Random random = new Random();
 
         /// <summary>
+        /// Фазы игры.
+        /// </summary>
+        public enum GamePhase
+        {
+            /// <summary>
+            /// Обычное состояние, игрок может совершать действия.
+            /// </summary>
+            Normal,
+            /// <summary>
+            /// Перестановка элементов.
+            /// </summary>
+            ElementSwap,
+            /// <summary>
+            /// Удаление комбинаций.
+            /// </summary>
+            ComboDeletion,
+        }
+
+        /// <summary>
+        /// Текущая фаза игры.
+        /// </summary>
+        public GamePhase currentGamePhase = GamePhase.Normal;
+
+        /// <summary>
         /// Выбранный объект.
         /// </summary>
         public GameBoardObject SelectedObject { get; private set; } = null;
 
+        /// <summary>
+        /// Время анимации смены элементов местами в миллисекундах
+        /// </summary>
+        public readonly static double elementSwapTimeout = 1000;
+
+        /// <summary>
+        /// Время, прошедшее с начала анимации смены элементов местами.
+        /// </summary>
+        private double elementSwapTimer = 0;
+
+        /// <summary>
+        /// Время прошедшее с предыдущего удаления комбинации в миллисекундах
+        /// </summary>
+        public readonly static double comboDeletionTimeout = 1000;
+
+        /// <summary>
+        /// Таймер удаления комбинаций.
+        /// </summary>
+        private double comboDeletionTimer = 0;
+
+        // Объекты, меняемые местами
+        public GameBoardObject objectSwap1;
+        public GameBoardObject objectSwap2;
+
+        /// <summary>
+        /// Конструктор.
+        /// </summary>
         public GameBoard()
         {
             // Создание объектов на игровом поле
@@ -83,6 +135,43 @@ namespace Match3
             }
         }
 
+        public void ObjectClick(GameBoardObject clickedObject)
+        {
+            Debug.WriteLine($"CLICKED ON {clickedObject.GetType()}");
+            // Если нет выбранного объекта
+            if(SelectedObject is null)
+            {
+                SelectObject(clickedObject);
+            }
+            // Если выбирается тот же объект
+            else if(clickedObject == SelectedObject)
+            {
+                ClearSelection();
+            }
+            // Если выбирается другой объект
+            else
+            {
+                // Если соседний объект
+                if((clickedObject.worldPos - SelectedObject.worldPos).Magnitude == 1.0)
+                {
+                    // Запоминаем какие объекты меняем, чтобы потом поменять их обратно
+                    objectSwap1 = clickedObject;
+                    objectSwap2 = SelectedObject;
+                    // Меняем местами их позиции
+                    SwapObjectPositions(clickedObject, SelectedObject);
+                    ClearSelection();
+                    // Меняем фазу игры
+                    elementSwapTimer = 0;
+                    currentGamePhase = GamePhase.ElementSwap;
+                }
+                // Если не соседний объект
+                else
+                {
+                    ClearSelection();
+                }
+            }
+        }
+
         /// <summary>
         /// Меняет местами позиции объектов.
         /// </summary>
@@ -115,6 +204,68 @@ namespace Match3
         {
             SelectedObject.pulseAnimationActive = false;
             SelectedObject = null;
+        }
+
+        /// <summary>
+        /// Вызывается когда смена элементов местами завершена.
+        /// </summary>
+        public void ElementSwapEnded()
+        {
+            ComboList comboList = GetComboList();
+            // Если нет комбинаций, то меняем элементы обратно
+            if(comboList.Count == 0)
+            {
+                currentGamePhase = GamePhase.Normal;
+                SwapObjectPositions(objectSwap1, objectSwap2);
+            }
+            else
+            {
+                currentGamePhase = GamePhase.ComboDeletion;
+                DeleteCombos(comboList);
+                comboDeletionTimer = 0;
+            }
+            elementSwapTimer = 0;
+        }
+
+        /// <summary>
+        /// Вызывается когда удаление комбинаций завершено.
+        /// </summary>
+        public void ComboDeletionEnded()
+        {
+            ComboList comboList = GetComboList();
+            if(comboList.Count > 0)
+            {
+                DeleteCombos(comboList);
+            }
+            else
+            {
+                currentGamePhase = GamePhase.Normal;
+            }
+            comboDeletionTimer = 0;
+        }
+
+        public void ProcessElementSwap(GameTime gameTime)
+        {
+            // Если идет смена элементов местами
+            if(currentGamePhase == GamePhase.ElementSwap)
+            {
+                if(elementSwapTimer >= elementSwapTimeout)
+                {
+                    ElementSwapEnded();
+                }
+                elementSwapTimer += gameTime.ElapsedGameTime.TotalMilliseconds;
+                Debug.WriteLine(elementSwapTimer);
+            }
+            // Если идет удаление комбинаций
+            else if(currentGamePhase == GamePhase.ComboDeletion)
+            {
+                if(comboDeletionTimer >= comboDeletionTimeout)
+                {
+                    ComboDeletionEnded();
+                }
+                comboDeletionTimer += gameTime.ElapsedGameTime.TotalMilliseconds;
+                Debug.WriteLine(comboDeletionTimer);
+            }
         }
 
         /// <summary>

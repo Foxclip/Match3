@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Diagnostics;
 using System.Linq;
+using static Match3.GameBoard;
 using ComboList = System.Collections.Generic.List<System.Collections.Generic.List<Match3.GameBoardObject>>;
 
 namespace Match3
@@ -37,45 +38,6 @@ namespace Match3
         private KeyboardState previousKeyboardState;
         private MouseState mouseState;
         private MouseState previousMouseState;
-
-        /// <summary>
-        /// Время анимации смены элементов местами в миллисекундах
-        /// </summary>
-        public readonly static double elementSwapTimeout = 1000;
-
-        /// <summary>
-        /// Время, прошедшее с начала анимации смены элементов местами.
-        /// </summary>
-        private double elementSwapTimer = 0;
-
-        // Объекты, меняемые местами
-        private GameBoardObject objectSwap1;
-        private GameBoardObject objectSwap2;
-
-        /// <summary>
-        /// Фазы игры.
-        /// </summary>
-        private enum GamePhase
-        {
-            /// <summary>
-            /// Обычное состояние, игрок может совершать действия.
-            /// </summary>
-            Normal,
-            /// <summary>
-            /// Перестановка элементов.
-            /// </summary>
-            ElementSwap,
-        }
-
-        /// <summary>
-        /// Текущая фаза игры. Должна устанавливаться не напрямую, а через pendingGamePhase.
-        /// </summary>
-        private GamePhase currentGamePhase = GamePhase.Normal;
-
-        /// <summary>
-        /// Какое фаза игры будет в следующем кадре.
-        /// </summary>
-        private GamePhase pendingGamePhase = GamePhase.Normal;
 
         public Game1()
         {
@@ -132,7 +94,7 @@ namespace Match3
         /// Выбор объекта на экране.
         /// </summary>
         /// <param name="mousePos">Позиция мыши в экранных координатах.</param>
-        private void SelectObject(Point mousePos)
+        private void ObjectClick(Point mousePos)
         {
             // Выбор объекта
             foreach(GameBoardObject clickedObject in gameBoard.objectList.Reverse<GameBoardObject>())
@@ -140,38 +102,7 @@ namespace Match3
                 Rectangle boundingBox = clickedObject.GetScreenBoundingBox();
                 if(boundingBox.Contains(mousePos))
                 {
-                    Debug.WriteLine($"CLICKED ON {clickedObject.GetType()}");
-                    // Если нет выбранного объекта
-                    if(gameBoard.SelectedObject is null)
-                    {
-                        gameBoard.SelectObject(clickedObject);
-                    }
-                    // Если выбирается тот же объект
-                    else if(clickedObject == gameBoard.SelectedObject)
-                    {
-                        gameBoard.ClearSelection();
-                    }
-                    // Если выбирается другой объект
-                    else
-                    {
-                        // Если соседний объект
-                        if((clickedObject.worldPos - gameBoard.SelectedObject.worldPos).Magnitude == 1.0)
-                        {
-                            // Запоминаем какие объекты меняем, чтобы потом поменять их обратно
-                            objectSwap1 = clickedObject;
-                            objectSwap2 = gameBoard.SelectedObject;
-                            // Меняем местами их позиции
-                            gameBoard.SwapObjectPositions(clickedObject, gameBoard.SelectedObject);
-                            gameBoard.ClearSelection();
-
-                            elementSwapTimer = 0;
-                            pendingGamePhase = GamePhase.ElementSwap;
-                        }
-                        else
-                        {
-                            gameBoard.ClearSelection();
-                        }
-                    }
+                    gameBoard.ObjectClick(clickedObject);
                     break;
                 }
             }
@@ -182,29 +113,7 @@ namespace Match3
         /// </summary>
         protected override void Update(GameTime gameTime)
         {
-            pendingGamePhase = currentGamePhase;
-
-            // Если идет смена элементов местами
-            if(currentGamePhase == GamePhase.ElementSwap)
-            {
-                if(elementSwapTimer >= elementSwapTimeout)
-                {
-                    pendingGamePhase = GamePhase.Normal;
-                    // Если нет комбинаций, то меняем элементы обратно
-                    ComboList comboList = gameBoard.GetComboList();
-                    if(comboList.Count == 0)
-                    {
-                        gameBoard.SwapObjectPositions(objectSwap1, objectSwap2);
-                    }
-                    else
-                    {
-                        gameBoard.DeleteCombos(comboList);
-                    }
-                    elementSwapTimer = 0;
-                }
-                elementSwapTimer += gameTime.ElapsedGameTime.TotalMilliseconds;
-                Debug.WriteLine(elementSwapTimer);
-            }
+            gameBoard.ProcessElementSwap(gameTime);
 
             // Обработка клавиатуры
             keyboardState = Keyboard.GetState();
@@ -224,10 +133,10 @@ namespace Match3
                 Debug.WriteLine("LEFT MOUSE");
                 Point mousePos = mouseState.Position;
 
-                if(currentGamePhase == GamePhase.Normal)
+                if(gameBoard.currentGamePhase == GamePhase.Normal)
                 {
                     Debug.WriteLine("SELECT OBJECT");
-                    SelectObject(mousePos);
+                    ObjectClick(mousePos);
                 }
             }
 
@@ -240,9 +149,6 @@ namespace Match3
             {
                 gameBoardObject.SpriteAnimation(gameTime);
             }
-
-            // Меняем состояние игры
-            currentGamePhase = pendingGamePhase;
 
             base.Update(gameTime);
         }
