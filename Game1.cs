@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Diagnostics;
 using System.Linq;
+using ComboList = System.Collections.Generic.List<System.Collections.Generic.List<Match3.GameBoardObject>>;
 
 namespace Match3
 {
@@ -22,20 +23,34 @@ namespace Match3
         public static Texture2D diamondSprite;
 
         // Размер клетки игрового поля в пикселях
-        public static float cellSize = 75f;
+        public readonly static float cellSize = 75f;
         // Масштаб спрайтов
-        public static float globalSpriteScale = 0.9f;
+        public readonly static float globalSpriteScale = 0.9f;
         // Сдвиг игрового поля в пикселях, чтобы оно было не с краю
-        public static Vector2 gameBoardOffset = new Vector2(45f, 45f);
+        public readonly static Vector2 gameBoardOffset = new Vector2(45f, 45f);
         // Размеры окна
-        public static int width = 615;
-        public static int height = 615;
+        public readonly static int width = 615;
+        public readonly static int height = 615;
 
         // Текущее и предыдущее состояния клавиатуры и мыши
         private KeyboardState keyboardState;
         private KeyboardState previousKeyboardState;
         private MouseState mouseState;
         private MouseState previousMouseState;
+
+        /// <summary>
+        /// Время анимации смены элементов местами в миллисекундах
+        /// </summary>
+        public readonly static double elementSwapTimeout = 1000;
+
+        /// <summary>
+        /// Время, прошедшее с начала анимации смены элементов местами.
+        /// </summary>
+        private double elementSwapTimer = 0;
+
+        // Объекты, меняемые местами
+        private GameBoardObject objectSwap1;
+        private GameBoardObject objectSwap2;
 
         /// <summary>
         /// Фазы игры.
@@ -61,9 +76,6 @@ namespace Match3
         /// Какое фаза игры будет в следующем кадре.
         /// </summary>
         private GamePhase pendingGamePhase = GamePhase.Normal;
-
-        // Выбранный объект
-        private GameBoardObject selectedObject = null;
 
         public Game1()
         {
@@ -130,30 +142,34 @@ namespace Match3
                 {
                     Debug.WriteLine($"CLICKED ON {clickedObject.GetType()}");
                     // Если нет выбранного объекта
-                    if(selectedObject is null)
+                    if(gameBoard.SelectedObject is null)
                     {
-                        selectedObject = clickedObject;
-                        selectedObject.pulseAnimationActive = true;
-                        Debug.WriteLine($"Launching animation on {clickedObject}");
+                        gameBoard.SelectObject(clickedObject);
                     }
                     // Если выбирается тот же объект
-                    else if(clickedObject == selectedObject)
+                    else if(clickedObject == gameBoard.SelectedObject)
                     {
-                        selectedObject.pulseAnimationActive = false;
-                        selectedObject = null;
+                        gameBoard.ClearSelection();
                     }
                     // Если выбирается другой объект
                     else
                     {
                         // Если соседний объект
-                        if((clickedObject.worldPos - selectedObject.worldPos).Magnitude == 1.0)
+                        if((clickedObject.worldPos - gameBoard.SelectedObject.worldPos).Magnitude == 1.0)
                         {
+                            // Запоминаем какие объекты меняем, чтобы потом поменять их обратно
+                            objectSwap1 = clickedObject;
+                            objectSwap2 = gameBoard.SelectedObject;
                             // Меняем местами их позиции
-                            Vector2Int clickedObjectPos = clickedObject.worldPos;
-                            Vector2Int selectedObjectPos = selectedObject.worldPos;
-                            clickedObject.worldPos = selectedObjectPos;
-                            selectedObject.worldPos = clickedObjectPos;
+                            gameBoard.SwapObjectPositions(clickedObject, gameBoard.SelectedObject);
+                            gameBoard.ClearSelection();
+
+                            elementSwapTimer = 0;
                             pendingGamePhase = GamePhase.ElementSwap;
+                        }
+                        else
+                        {
+                            gameBoard.ClearSelection();
                         }
                     }
                     break;
@@ -168,6 +184,28 @@ namespace Match3
         {
             pendingGamePhase = currentGamePhase;
 
+            // Если идет смена элементов местами
+            if(currentGamePhase == GamePhase.ElementSwap)
+            {
+                if(elementSwapTimer >= elementSwapTimeout)
+                {
+                    pendingGamePhase = GamePhase.Normal;
+                    // Если нет комбинаций, то меняем элементы обратно
+                    ComboList comboList = gameBoard.GetComboList();
+                    if(comboList.Count == 0)
+                    {
+                        gameBoard.SwapObjectPositions(objectSwap1, objectSwap2);
+                    }
+                    else
+                    {
+                        gameBoard.DeleteCombos(comboList);
+                    }
+                    elementSwapTimer = 0;
+                }
+                elementSwapTimer += gameTime.ElapsedGameTime.TotalMilliseconds;
+                Debug.WriteLine(elementSwapTimer);
+            }
+
             // Обработка клавиатуры
             keyboardState = Keyboard.GetState();
             if(GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Escape))
@@ -176,11 +214,6 @@ namespace Match3
             }
             if(KeyPressed(Keys.Space))
             {
-                if(currentGamePhase == GamePhase.Normal)
-                {
-                    gameBoard.CheckCombo(false);
-                    gameBoard.CheckCombo(true);
-                }
                 Debug.WriteLine("SPACE");
             }
 

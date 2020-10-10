@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using ComboList = System.Collections.Generic.List<System.Collections.Generic.List<Match3.GameBoardObject>>;
+
 
 namespace Match3
 {
@@ -21,6 +23,11 @@ namespace Match3
         /// Генератор случайных чисел.
         /// </summary>
         public readonly Random random = new Random();
+
+        /// <summary>
+        /// Выбранный объект.
+        /// </summary>
+        public GameBoardObject SelectedObject { get; private set; } = null;
 
         public GameBoard()
         {
@@ -59,7 +66,6 @@ namespace Match3
         /// Возвращает объект, находящийся в клетке игрового поля или null если там ничего нет.
         /// </summary>
         /// <param name="pos">Клетка игрового поля.</param>
-        /// <returns></returns>
         public GameBoardObject GetObjectAtPosition(Vector2Int pos)
         {
             List<GameBoardObject> foundObjects = objectList.FindAll(obj => obj.worldPos == pos);
@@ -78,6 +84,40 @@ namespace Match3
         }
 
         /// <summary>
+        /// Меняет местами позиции объектов.
+        /// </summary>
+        public void SwapObjectPositions(GameBoardObject object1, GameBoardObject object2)
+        {
+            Debug.WriteLine($"Swapping {object1} and {object2}");
+            Vector2Int object1Pos = object1.worldPos;
+            Vector2Int object2Pos = object2.worldPos;
+            object1.worldPos = object2Pos;
+            object2.worldPos = object1Pos;
+        }
+
+        /// <summary>
+        /// Выбор объекта.
+        /// </summary>
+        public void SelectObject(GameBoardObject gameBoardObject)
+        {
+            if(SelectedObject != null)
+            {
+                SelectedObject.pulseAnimationActive = false;
+            }
+            SelectedObject = gameBoardObject;
+            SelectedObject.pulseAnimationActive = true;
+        }
+
+        /// <summary>
+        /// Убрать выделение объекта.
+        /// </summary>
+        public void ClearSelection()
+        {
+            SelectedObject.pulseAnimationActive = false;
+            SelectedObject = null;
+        }
+
+        /// <summary>
         /// Возвращает объект, находящийся в клетке игрового поля или null если там ничего нет.
         /// </summary>
         public GameBoardObject GetObjectAtPosition(int x, int y)
@@ -86,15 +126,25 @@ namespace Match3
         }
 
         /// <summary>
-        /// Проверяет, есть ли на доске несколько элементов, стоящих в ряд.
+        /// /// Возвращает список комбинаций элементов, стоящих в ряд.
+        /// </summary>
+        /// <returns>Список комбинаций, где каждая комбинация это список объектов, входящих в комбинацию.</returns>
+        public ComboList GetComboList()
+        {
+            return CheckCombo(false).Concat(CheckCombo(true)).ToList();
+        }
+
+        /// <summary>
+        /// Возвращает список комбинаций (в определенном направлении) элементов, стоящих в ряд.
         /// </summary>
         /// <param name="vertical">Вертикальное направление, иначе горизонтальное.</param>
-        public bool CheckCombo(bool vertical)
+        /// <returns>Список комбинаций в определенном направлении, где каждая комбинация это список объектов, входящих в комбинацию.</returns>
+        private ComboList CheckCombo(bool vertical)
         {
             string directionString = vertical ? "Вертикальное" : "Горизонтальное";
 
             // Определение комбо
-            List<List<GameBoardObject>> allComboList = new List<List<GameBoardObject>>();
+            ComboList allComboList = new ComboList();
             List<GameBoardObject> tempComboList = new List<GameBoardObject>();
             for(int i = 0; i < 8; i++)
             {
@@ -131,10 +181,14 @@ namespace Match3
                 }
             }
 
-            // Удаление объектов
-            List<GameBoardObject> objectsToDelete = allComboList.SelectMany(tempList => tempList).ToList();
-            objectList.RemoveAll(obj => objectsToDelete.Contains(obj));
+            return allComboList;
+        }
 
+        public void DeleteCombos(ComboList comboList)
+        {
+            // Удаляем объекты
+            List<GameBoardObject> objectsToDelete = comboList.SelectMany(tempList => tempList).ToList();
+            objectList.RemoveAll(obj => objectsToDelete.Contains(obj));
             for(int x = 0; x < 8; x++)
             {
                 // Сдвигаем элементы сверху
@@ -163,8 +217,6 @@ namespace Match3
                     objectList.Add(randomObject);
                 }
             }
-
-            return allComboList.Count > 0;
         }
     }
 }
