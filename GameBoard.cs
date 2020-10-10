@@ -31,6 +31,10 @@ namespace Match3
         public enum GamePhase
         {
             /// <summary>
+            /// Главное меню.
+            /// </summary>
+            MainMenu,
+            /// <summary>
             /// Обычное состояние, игрок может совершать действия.
             /// </summary>
             Normal,
@@ -50,6 +54,10 @@ namespace Match3
             /// Сдвиг элементов после удаления комбинаций.
             /// </summary>
             ElementSlide,
+            /// <summary>
+            /// Игра завершена.
+            /// </summary>
+            GameOver,
         }
 
         /// <summary>
@@ -60,7 +68,7 @@ namespace Match3
         /// <summary>
         /// Текущая фаза игры.
         /// </summary>
-        public GamePhase currentGamePhase = GamePhase.Normal;
+        public GamePhase currentGamePhase = GamePhase.MainMenu;
 
         /// <summary>
         /// Выбранный объект.
@@ -167,8 +175,8 @@ namespace Match3
                     objectSwap2 = SelectedObject;
                     // Меняем местами их позиции
                     SwapObjectPositions(clickedObject, SelectedObject);
+
                     ClearSelection();
-                    // Меняем фазу игры
                     currentGamePhase = GamePhase.ElementSwap;
                 }
                 // Если не соседний объект

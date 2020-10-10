@@ -40,6 +40,9 @@ namespace Match3
         private MouseState mouseState;
         private MouseState previousMouseState;
 
+        // Кнопка PLay
+        private Button playButton;
+
         // Текстура верхней панели
         private Texture2D topPanel;
         // ascii шрифт
@@ -82,12 +85,18 @@ namespace Match3
             hexagonSprite = Content.Load<Texture2D>("hexagon");
             diamondSprite = Content.Load<Texture2D>("diamond");
 
+            // Спрайт кнопки Play
+            Texture2D playButtonSprite = Content.Load<Texture2D>("play_button");
+
             // Загрузка шрифтов
             ascii_font = Content.Load<SpriteFont>("Arial_ascii");
             russian_font = Content.Load<SpriteFont>("Arial_russian");
 
             // Игровое поле, должно быть инициализировано после загрузки спрайтов
             gameBoard = new GameBoard();
+
+            // Кнопка Play
+            playButton = new Button(playButtonSprite, new Vector2(width / 2, height / 2));
 
         }
 
@@ -109,24 +118,6 @@ namespace Match3
         }
 
         /// <summary>
-        /// Выбор объекта на экране.
-        /// </summary>
-        /// <param name="mousePos">Позиция мыши в экранных координатах.</param>
-        private void ObjectClick(Point mousePos)
-        {
-            // Выбор объекта
-            foreach(GameBoardObject clickedObject in gameBoard.objectList.Reverse<GameBoardObject>())
-            {
-                Rectangle boundingBox = clickedObject.GetScreenBoundingBox();
-                if(boundingBox.Contains(mousePos))
-                {
-                    gameBoard.ObjectClick(clickedObject);
-                    break;
-                }
-            }
-        }
-
-        /// <summary>
         /// Обновление состояния игры. Вызывается автоматически.
         /// </summary>
         protected override void Update(GameTime gameTime)
@@ -140,22 +131,34 @@ namespace Match3
             {
                 Exit();
             }
-            if(KeyPressed(Keys.Space))
-            {
-                Debug.WriteLine("SPACE");
-            }
 
             // Обработка мыши
             mouseState = Mouse.GetState();
             if(LeftMouseButtonPressed())
             {
-                Debug.WriteLine("LEFT MOUSE");
                 Point mousePos = mouseState.Position;
-
-                if(gameBoard.currentGamePhase == GamePhase.Normal)
+                // Главное меню
+                if(gameBoard.currentGamePhase == GamePhase.MainMenu)
                 {
-                    Debug.WriteLine("SELECT OBJECT");
-                    ObjectClick(mousePos);
+                    // Нажатие на кнопку Play
+                    if(playButton.GetScreenBoundingBox().Contains(mousePos))
+                    {
+                        gameBoard.currentGamePhase = GamePhase.Normal;
+                    }
+                }
+                // Обычный режим игры
+                else if(gameBoard.currentGamePhase == GamePhase.Normal)
+                {
+                    // Выбор объекта
+                    foreach(GameBoardObject clickedObject in gameBoard.objectList.Reverse<GameBoardObject>())
+                    {
+                        Rectangle boundingBox = clickedObject.GetScreenBoundingBox();
+                        if(boundingBox.Contains(mousePos))
+                        {
+                            gameBoard.ObjectClick(clickedObject);
+                            break;
+                        }
+                    }
                 }
             }
 
@@ -184,19 +187,28 @@ namespace Match3
 
             _spriteBatch.Begin();
 
-            // Отрисовка объектов на игровом поле
-            foreach(GameBoardObject gameBoardObject in gameBoard.objectList)
+            // Главное меню
+            if(gameBoard.currentGamePhase == GamePhase.MainMenu)
             {
-                gameBoardObject.Draw(_spriteBatch);
+                playButton.Draw(_spriteBatch);
             }
-            // Верхняя панель
-            _spriteBatch.Draw(topPanel, new Rectangle(0, 0, width, 50), Color.Black);
-            // Количество очков
-            Vector2 position1 = new Vector2(0, 0) + textOffset;
-            _spriteBatch.DrawString(russian_font, $"Очки", position1, Color.Yellow);
-            Vector2 size = russian_font.MeasureString("Очки");
-            Vector2 position2 = new Vector2(size.X, 0) + textOffset;
-            _spriteBatch.DrawString(ascii_font, $": {gameBoard.score}", position2, Color.Yellow);
+            // Основной режим игры
+            else if(gameBoard.currentGamePhase != GamePhase.GameOver)
+            {
+                // Отрисовка объектов на игровом поле
+                foreach(GameBoardObject gameBoardObject in gameBoard.objectList)
+                {
+                    gameBoardObject.Draw(_spriteBatch);
+                }
+                // Верхняя панель
+                _spriteBatch.Draw(topPanel, new Rectangle(0, 0, width, 50), Color.Black);
+                // Количество очков
+                Vector2 position1 = new Vector2(0, 0) + textOffset;
+                _spriteBatch.DrawString(russian_font, $"Очки", position1, Color.Yellow);
+                Vector2 size = russian_font.MeasureString("Очки");
+                Vector2 position2 = new Vector2(size.X, 0) + textOffset;
+                _spriteBatch.DrawString(ascii_font, $": {gameBoard.score}", position2, Color.Yellow);
+            }
 
             _spriteBatch.End();
 

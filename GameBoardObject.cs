@@ -12,7 +12,7 @@ namespace Match3
     /// <summary>
     /// Объект на игровом поле.
     /// </summary>
-    public class GameBoardObject
+    public class GameBoardObject : IBoundingBox, IDrawable
     {
         /// <summary>
         /// Позиция объекта на игровом поле.

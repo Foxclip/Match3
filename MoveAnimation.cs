@@ -25,7 +25,7 @@ namespace Match3
         /// <summary>
         /// Конструктор.
         /// </summary>
-        /// <param name="linkedObject">Привязанный обеъект на игровом поле.</param>
+        /// <param name="linkedObject">Привязанный объект на игровом поле.</param>
         /// <param name="beginPos">Позиция в начале анимации.</param>
         /// <param name="endPos">Позиция в конце анимации.</param>
         /// <param name="blocking">Блокирует ли анимация переход в следующее состояние игры.</param>
