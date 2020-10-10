@@ -39,9 +39,17 @@ namespace Match3
             /// </summary>
             ElementSwap,
             /// <summary>
+            /// Перестановка элементов обратно.
+            /// </summary>
+            SwapBack,
+            /// <summary>
             /// Удаление комбинаций.
             /// </summary>
             ComboDeletion,
+            /// <summary>
+            /// Сдвиг элементов после удаления комбинаций.
+            /// </summary>
+            ElementSlide,
         }
 
         /// <summary>
@@ -55,24 +63,14 @@ namespace Match3
         public GameBoardObject SelectedObject { get; private set; } = null;
 
         /// <summary>
-        /// Время анимации смены элементов местами в миллисекундах
+        /// Список активных анимаций.
         /// </summary>
-        public readonly static double elementSwapTimeout = 1000;
+        public List<Animation> activeAnimations = new List<Animation>();
 
         /// <summary>
-        /// Время, прошедшее с начала анимации смены элементов местами.
+        /// Анимация пульсации выбранного объекта.
         /// </summary>
-        private double elementSwapTimer = 0;
-
-        /// <summary>
-        /// Время прошедшее с предыдущего удаления комбинации в миллисекундах
-        /// </summary>
-        public readonly static double comboDeletionTimeout = 1000;
-
-        /// <summary>
-        /// Таймер удаления комбинаций.
-        /// </summary>
-        private double comboDeletionTimer = 0;
+        public PulseAnimation selectedObjectPulseAnimation = null;
 
         // Объекты, меняемые местами
         public GameBoardObject objectSwap1;
@@ -161,7 +159,6 @@ namespace Match3
                     SwapObjectPositions(clickedObject, SelectedObject);
                     ClearSelection();
                     // Меняем фазу игры
-                    elementSwapTimer = 0;
                     currentGamePhase = GamePhase.ElementSwap;
                 }
                 // Если не соседний объект
@@ -178,10 +175,16 @@ namespace Match3
         public void SwapObjectPositions(GameBoardObject object1, GameBoardObject object2)
         {
             Debug.WriteLine($"Swapping {object1} and {object2}");
+            // Меняем позиции
             Vector2Int object1Pos = object1.worldPos;
             Vector2Int object2Pos = object2.worldPos;
             object1.worldPos = object2Pos;
             object2.worldPos = object1Pos;
+            // Запускаем анимации
+            MoveAnimation moveAnimation1 = new MoveAnimation(object1, object1Pos, object2Pos, blocking: true);
+            MoveAnimation moveAnimation2 = new MoveAnimation(object2, object2Pos, object1Pos, blocking: true);
+            activeAnimations.Add(moveAnimation1);
+            activeAnimations.Add(moveAnimation2);
         }
 
         /// <summary>
@@ -189,12 +192,9 @@ namespace Match3
         /// </summary>
         public void SelectObject(GameBoardObject gameBoardObject)
         {
-            if(SelectedObject != null)
-            {
-                SelectedObject.pulseAnimationActive = false;
-            }
             SelectedObject = gameBoardObject;
-            SelectedObject.pulseAnimationActive = true;
+            selectedObjectPulseAnimation = new PulseAnimation(SelectedObject);
+            activeAnimations.Add(selectedObjectPulseAnimation);
         }
 
         /// <summary>
@@ -202,69 +202,65 @@ namespace Match3
         /// </summary>
         public void ClearSelection()
         {
-            SelectedObject.pulseAnimationActive = false;
+            selectedObjectPulseAnimation?.OnDelete();
+            selectedObjectPulseAnimation = null;
             SelectedObject = null;
         }
 
         /// <summary>
-        /// Вызывается когда смена элементов местами завершена.
+        /// Изменяет фазу игры, если это необходимо.
         /// </summary>
-        public void ElementSwapEnded()
+        public void ChangeState()
         {
-            ComboList comboList = GetComboList();
-            // Если нет комбинаций, то меняем элементы обратно
-            if(comboList.Count == 0)
+            // Если есть блокирующие анимации, то состояние изменять нельзя
+            if(activeAnimations.FindAll(animation => animation.blocking).Count > 0)
             {
-                currentGamePhase = GamePhase.Normal;
-                SwapObjectPositions(objectSwap1, objectSwap2);
+                return;
             }
-            else
-            {
-                currentGamePhase = GamePhase.ComboDeletion;
-                DeleteCombos(comboList);
-                comboDeletionTimer = 0;
-            }
-            elementSwapTimer = 0;
-        }
-
-        /// <summary>
-        /// Вызывается когда удаление комбинаций завершено.
-        /// </summary>
-        public void ComboDeletionEnded()
-        {
-            ComboList comboList = GetComboList();
-            if(comboList.Count > 0)
-            {
-                DeleteCombos(comboList);
-            }
-            else
-            {
-                currentGamePhase = GamePhase.Normal;
-            }
-            comboDeletionTimer = 0;
-        }
-
-        public void ProcessElementSwap(GameTime gameTime)
-        {
-            // Если идет смена элементов местами
+            // Смена элементов местами
             if(currentGamePhase == GamePhase.ElementSwap)
             {
-                if(elementSwapTimer >= elementSwapTimeout)
+                ComboList comboList = GetComboList();
+                if(comboList.Count == 0)
                 {
-                    ElementSwapEnded();
+                    currentGamePhase = GamePhase.SwapBack;
                 }
-                elementSwapTimer += gameTime.ElapsedGameTime.TotalMilliseconds;
-                Debug.WriteLine(elementSwapTimer);
+                else
+                {
+                    DeleteCombos(comboList);
+                    currentGamePhase = GamePhase.ComboDeletion;
+                }
             }
-            // Если идет удаление комбинаций
+            // Смена элементов обратно
+            if(currentGamePhase == GamePhase.SwapBack)
+            {
+                // Сохранение позиций объектов
+                Vector2Int object1Pos = objectSwap1.worldPos;
+                Vector2Int object2Pos = objectSwap2.worldPos;
+                // Смена объектов местами
+                objectSwap1.worldPos = object2Pos;
+                objectSwap2.worldPos = object1Pos;
+                // Запуск анимации
+                MoveAnimation moveAnimation1 = new MoveAnimation(objectSwap1, object1Pos, object2Pos, blocking: true);
+                MoveAnimation moveAnimation2 = new MoveAnimation(objectSwap2, object2Pos, object1Pos, blocking: true);
+                activeAnimations.Add(moveAnimation1);
+                activeAnimations.Add(moveAnimation2);
+
+                ClearSelection();
+                currentGamePhase = GamePhase.ComboDeletion;
+            }
+            // Удаление комбинаций
             else if(currentGamePhase == GamePhase.ComboDeletion)
             {
-                if(comboDeletionTimer >= comboDeletionTimeout)
+                ComboList comboList = GetComboList();
+                if(comboList.Count == 0)
                 {
-                    ComboDeletionEnded();
+                    currentGamePhase = GamePhase.Normal;
                 }
-                comboDeletionTimer += gameTime.ElapsedGameTime.TotalMilliseconds;
-                Debug.WriteLine(comboDeletionTimer);
+                else
+                {
+                    DeleteCombos(comboList);
+                }
             }
         }
 
@@ -340,6 +336,7 @@ namespace Match3
             // Удаляем объекты
             List<GameBoardObject> objectsToDelete = comboList.SelectMany(tempList => tempList).ToList();
             objectList.RemoveAll(obj => objectsToDelete.Contains(obj));
+
             for(int x = 0; x < 8; x++)
             {
                 // Сдвигаем элементы сверху
@@ -352,7 +349,8 @@ namespace Match3
                         Vector2Int newPos = new Vector2Int(gameBoardObject.worldPos.x, 7 - objectsUnder);
                         if(gameBoardObject.worldPos != newPos)
                         {
-                            Debug.WriteLine($"Moving {gameBoardObject.worldPos} to {newPos}");
+                            MoveAnimation moveAnimation = new MoveAnimation(gameBoardObject, gameBoardObject.worldPos, newPos, blocking: true);
+                            activeAnimations.Add(moveAnimation);
                             gameBoardObject.worldPos = newPos;
                         }
                         objectsUnder++;
@@ -362,10 +360,15 @@ namespace Match3
                 int newElementCount = 8 - objectsUnder;
                 for(int new_i = 0; new_i < newElementCount; new_i++)
                 {
+                    // Позиция объекта и спрайта
                     Vector2Int pos = new Vector2Int(x, new_i);
                     Vector2 spritePos = pos - new Vector2(0, newElementCount);
+                    // Создание объекта
                     GameBoardObject randomObject = CreateRandomElement(pos, spritePos);
                     objectList.Add(randomObject);
+                    // Запуск анимации
+                    MoveAnimation moveAnimation = new MoveAnimation(randomObject, spritePos, pos, blocking: true);
+                    activeAnimations.Add(moveAnimation);
                 }
             }
         }

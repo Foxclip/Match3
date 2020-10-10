@@ -40,26 +40,6 @@ namespace Match3
         public float spriteAnimatedScale = 1.0f;
 
         /// <summary>
-        /// Активна ли анимация пульсации.
-        /// </summary>
-        public bool pulseAnimationActive = false;
-
-        /// <summary>
-        /// Время, прошедшее с начала анимации пульсации.
-        /// </summary>
-        private double pulseAnimationTimer = 0.0f;
-
-        /// <summary>
-        /// Период анимации пульсации в миллисекундах.
-        /// </summary>
-        public static double pulseAnimationPeriod = 1000f;
-
-        /// <summary>
-        /// Сдвиг фазы анимации пульсации.
-        /// </summary>
-        public static double pulseAnimationOffset = Math.PI;
-
-        /// <summary>
         /// Конструктор.
         /// </summary>
         /// <param name="pos">Клетка игрового поля.</param>
@@ -99,28 +79,6 @@ namespace Match3
             float finalSpriteScale = Game1.cellSize / sprite.Width * spriteScale * spriteAnimatedScale * Game1.globalSpriteScale;
             // Отрисовка спрайта
             spriteBatch.Draw(sprite, spriteScreenPos, null, Color.White, 0f, spriteOffset, finalSpriteScale, SpriteEffects.None, 0f);
-        }
-
-        /// <summary>
-        /// Анимация спрайта
-        /// </summary>
-        public void SpriteAnimation(GameTime gameTime)
-        {
-            // Перемещение спрайта к объекту
-            spriteWorldPos = Vector2.Lerp(spriteWorldPos, worldPos, 0.1f);
-
-            // Анимация пульсации
-            if(pulseAnimationActive) 
-            {
-                double sinusoid = Math.Sin(pulseAnimationTimer * Math.PI * 2.0f / pulseAnimationPeriod + pulseAnimationOffset);
-                spriteAnimatedScale = (float)Utils.MapRange(sinusoid, -1, 1, 0.75, 1);
-                pulseAnimationTimer += gameTime.ElapsedGameTime.TotalMilliseconds;
-            }
-            else
-            {
-                spriteAnimatedScale = 1.0f;
-                pulseAnimationTimer = 0.0;
-            }
         }
 
         /// <summary>

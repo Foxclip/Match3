@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using static Match3.GameBoard;
@@ -113,7 +114,8 @@ namespace Match3
         /// </summary>
         protected override void Update(GameTime gameTime)
         {
-            gameBoard.ProcessElementSwap(gameTime);
+            // Пытаемся изменить состояние игры
+            gameBoard.ChangeState();
 
             // Обработка клавиатуры
             keyboardState = Keyboard.GetState();
@@ -144,11 +146,12 @@ namespace Match3
             previousKeyboardState = keyboardState;
             previousMouseState = mouseState;
 
-            // Анимируем спрайты
-            foreach(GameBoardObject gameBoardObject in gameBoard.objectList)
-            {
-                gameBoardObject.SpriteAnimation(gameTime);
-            }
+            // Обновляем состояние анимаций
+            gameBoard.activeAnimations.ForEach(animation => animation.Update(gameTime));
+            // Удаляем завершившиеся анимации
+            List<Animation> animationsToDelete = gameBoard.activeAnimations.FindAll(animation => !animation.active);
+            animationsToDelete.ForEach(animation => animation.OnDelete());
+            gameBoard.activeAnimations = gameBoard.activeAnimations.Except(animationsToDelete).ToList();
 
             base.Update(gameTime);
         }
