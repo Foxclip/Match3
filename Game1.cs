@@ -45,10 +45,8 @@ namespace Match3
 
         // Текстура верхней панели
         private Texture2D topPanel;
-        // ascii шрифт
-        private SpriteFont ascii_font;
-        // Русский шрифт
-        private SpriteFont russian_font;
+        // Шрифт
+        private SpriteFont font;
         // Сдвиг текста
         private Vector2 textOffset = new Vector2(20f, 15f);
 
@@ -89,8 +87,7 @@ namespace Match3
             Texture2D playButtonSprite = Content.Load<Texture2D>("play_button");
 
             // Загрузка шрифтов
-            ascii_font = Content.Load<SpriteFont>("Arial_ascii");
-            russian_font = Content.Load<SpriteFont>("Arial_russian");
+            font = Content.Load<SpriteFont>("Arial");
 
             // Игровое поле, должно быть инициализировано после загрузки спрайтов
             gameBoard = new GameBoard();
@@ -195,19 +192,13 @@ namespace Match3
             // Основной режим игры
             else if(gameBoard.currentGamePhase != GamePhase.GameOver)
             {
-                // Отрисовка объектов на игровом поле
-                foreach(GameBoardObject gameBoardObject in gameBoard.objectList)
-                {
-                    gameBoardObject.Draw(_spriteBatch);
-                }
+                // Объектоы на игровом поле
+                gameBoard.objectList.ForEach(obj => obj.Draw(_spriteBatch));
                 // Верхняя панель
                 _spriteBatch.Draw(topPanel, new Rectangle(0, 0, width, 50), Color.Black);
                 // Количество очков
-                Vector2 position1 = new Vector2(0, 0) + textOffset;
-                _spriteBatch.DrawString(russian_font, $"Очки", position1, Color.Yellow);
-                Vector2 size = russian_font.MeasureString("Очки");
-                Vector2 position2 = new Vector2(size.X, 0) + textOffset;
-                _spriteBatch.DrawString(ascii_font, $": {gameBoard.score}", position2, Color.Yellow);
+                Vector2 textPosition = new Vector2(0, 0) + textOffset;
+                _spriteBatch.DrawString(font, $"Очки: {gameBoard.score}", textPosition, Color.Yellow);
             }
 
             _spriteBatch.End();
