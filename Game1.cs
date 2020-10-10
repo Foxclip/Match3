@@ -30,23 +30,30 @@ namespace Match3
         public static int width = 615;
         public static int height = 615;
 
-        // Текущее и предыдущее состояния клавиатуры
+        // Текущее и предыдущее состояния клавиатуры и мыши
         private KeyboardState keyboardState;
         private KeyboardState previousKeyboardState;
+        private MouseState mouseState;
+        private MouseState previousMouseState;
+
+        // Выбранный объект
+        private GameBoardObject selectedObject = null;
 
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
+            //_graphics.SynchronizeWithVerticalRetrace = true;
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
         }
 
         protected override void Initialize()
         {
-            _graphics.SynchronizeWithVerticalRetrace = true;
+            // Установка размера окна
             _graphics.PreferredBackBufferWidth = width;
             _graphics.PreferredBackBufferHeight = height;
             _graphics.ApplyChanges();
+
             base.Initialize();
         }
 
@@ -61,17 +68,26 @@ namespace Match3
             hexagonSprite = Content.Load<Texture2D>("hexagon");
             diamondSprite = Content.Load<Texture2D>("diamond");
 
+            // Игровое поле, должно быть инициализировано после загрузки спрайтов
             gameBoard = new GameBoard();
 
         }
 
         /// <summary>
-        /// Проверяет, была ли нажата клавиша.
+        /// Проверяет, была ли нажата кнопка клавиатуры.
         /// </summary>
-        /// <param name="key">Клавиша клавиатуры.</param>
-        private bool CheckKeyPress(Keys key)
+        /// <param name="key">Кнопка клавиатуры.</param>
+        private bool KeyPressed(Keys key)
         {
             return keyboardState.IsKeyDown(key) && !previousKeyboardState.IsKeyDown(key);
+        }
+
+        /// <summary>
+        /// Проверяет, была ли нажата левая кнопка мыши.
+        /// </summary>
+        private bool LeftMouseButtonPressed()
+        {
+            return mouseState.LeftButton == ButtonState.Pressed && previousMouseState.LeftButton != ButtonState.Pressed;
         }
 
         protected override void Update(GameTime gameTime)
@@ -82,19 +98,47 @@ namespace Match3
             {
                 Exit();
             }
-            if(CheckKeyPress(Keys.Space))
+            if(KeyPressed(Keys.Space))
             {
                 gameBoard.CheckCombo(false);
                 gameBoard.CheckCombo(true);
                 Debug.WriteLine("SPACE");
             }
-            // Сохраняем состояние клавиатуры
+
+            // Обработка мыши
+            mouseState = Mouse.GetState();
+            if(LeftMouseButtonPressed())
+            {
+                Debug.WriteLine("LEFT MOUSE");
+                Point mousePos = mouseState.Position;
+                foreach(GameBoardObject obj in gameBoard.objectList)
+                {
+                    Rectangle boundingBox = obj.GetScreenBoundingBox();
+                    if(boundingBox.Contains(mousePos))
+                    {
+                        if(selectedObject is null || obj == selectedObject)
+                        {
+                            selectedObject = obj;
+                            obj.pulseAnimationActive = true;
+                        }
+                        if(selectedObject != null && obj != selectedObject)
+                        {
+                            selectedObject.pulseAnimationActive = false;
+                            selectedObject = obj;
+                            obj.pulseAnimationActive = true;
+                        }
+                    }
+                }
+            }
+
+            // Сохраняем состояние клавиатуры и мыши
             previousKeyboardState = keyboardState;
+            previousMouseState = mouseState;
 
             // Двигаем спрайты
             foreach(GameBoardObject gameBoardObject in gameBoard.objectList)
             {
-                gameBoardObject.MoveSprite();
+                gameBoardObject.SpriteAnimation(gameTime);
             }
 
             base.Update(gameTime);

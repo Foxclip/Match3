@@ -9,57 +9,6 @@ using Vector2 = Microsoft.Xna.Framework.Vector2;
 
 namespace Match3
 {
-
-    /// <summary>
-    /// Vector2, но с целыми координатами.
-    /// </summary>
-    public struct Vector2Int
-    {
-        public int x;
-        public int y;
-
-        public Vector2Int(int x, int y)
-        {
-            this.x = x;
-            this.y = y;
-        }
-
-        public override bool Equals(object obj)
-        {
-            return base.Equals(obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
-
-        public override string ToString()
-        {
-            return $"({x}, {y})";
-        }
-
-        public Vector2 ToVector2()
-        {
-            return new Vector2(x, y);
-        }
-
-        public static bool operator ==(Vector2Int one, Vector2Int another)
-        {
-            return (one.x == another.x) && (one.y == another.y);
-        }
-
-        public static bool operator !=(Vector2Int one, Vector2Int another)
-        {
-            return !(one == another);
-        }
-
-        public static Vector2Int operator +(Vector2Int one, Vector2Int another)
-        {
-            return new Vector2Int(one.x + another.x, one.y + another.y);
-        }
-    }
-
     /// <summary>
     /// Объект на игровом поле.
     /// </summary>
@@ -84,6 +33,21 @@ namespace Match3
         /// Масштабирование спрайта.
         /// </summary>
         public float spriteScale;
+
+        /// <summary>
+        /// Множитель мвсштаба управляемый анимацией.
+        /// </summary>
+        public float spriteAnimatedScale = 1.0f;
+
+        /// <summary>
+        /// Активна ли анимация пульсации.
+        /// </summary>
+        public bool pulseAnimationActive = false;
+
+        /// <summary>
+        /// Период анимации пульсации в миллисекундах.
+        /// </summary>
+        public static float pulseAnimationPeriod = 1000f;
 
         /// <summary>
         /// Конструктор.
@@ -112,6 +76,15 @@ namespace Match3
         }
 
         /// <summary>
+        /// Конвертирует координаты на экране в мировые координаты.
+        /// </summary>
+        public Vector2 ScreenToWorld(int x, int y)
+        {
+            Vector2 vector = new Vector2(x, y);
+            return (vector - Game1.gameBoardOffset) / Game1.cellSize;
+        }
+
+        /// <summary>
         /// Рисует объект на экране.
         /// </summary>
         public void Draw(SpriteBatch spriteBatch)
@@ -121,18 +94,50 @@ namespace Match3
             // Центр спрайта
             Vector2 spriteOffset = new Vector2(sprite.Width / 2, sprite.Height / 2);
             // Масштабирование спрайта
-            float finalSpriteScale = Game1.cellSize / sprite.Width * spriteScale * Game1.globalSpriteScale;
+            float finalSpriteScale = Game1.cellSize / sprite.Width * spriteScale * spriteAnimatedScale * Game1.globalSpriteScale;
             // Отрисовка спрайта
             spriteBatch.Draw(sprite, spriteScreenPos, null, Color.White, 0f, spriteOffset, finalSpriteScale, SpriteEffects.None, 0f);
         }
 
         /// <summary>
-        /// Передвигает спрайт к позиции объекта.
+        /// Анимация спрайта
         /// </summary>
-        public void MoveSprite()
+        public void SpriteAnimation(GameTime gameTime)
         {
+            // Перемещение спрайта к объекту
             spriteWorldPos = Vector2.Lerp(spriteWorldPos, worldPos.ToVector2(), 0.1f);
+
+            // Анимация пульсации
+            if(pulseAnimationActive) 
+            {
+                double sinusoid = Math.Sin(gameTime.TotalGameTime.TotalMilliseconds * Math.PI * 2.0f / pulseAnimationPeriod);
+                spriteAnimatedScale = (float)Utils.MapRange(sinusoid, -1, 1, 0.75, 1);
+            }
+            else
+            {
+                spriteAnimatedScale = 1.0f;
+            }
         }
+
+        /// <summary>
+        /// Возвращает bounding box объекта в экранных координатах.
+        /// </summary>
+        public Rectangle GetScreenBoundingBox()
+        {
+            // Позиция спрайта на экране
+            Vector2 spriteScreenPos = WorldToScreen(spriteWorldPos);
+            // Масштабирование спрайта
+            float finalSpriteScale = Game1.cellSize / sprite.Width * spriteScale * Game1.globalSpriteScale;
+            // Размер спрайта на экране
+            int spriteScreenSize = (int)(sprite.Width * finalSpriteScale);
+            // bounding box
+            int x = (int)(spriteScreenPos.X - spriteScreenSize / 2);
+            int y = (int)(spriteScreenPos.Y - spriteScreenSize / 2);
+            Rectangle boundingBox = new Rectangle(x, y, spriteScreenSize, spriteScreenSize);
+
+            return boundingBox;
+        }
+
     }
 
     /// <summary>
