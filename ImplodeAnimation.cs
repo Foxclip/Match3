@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Microsoft.VisualBasic.CompilerServices;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -6,34 +7,31 @@ using Vector2 = Microsoft.Xna.Framework.Vector2;
 
 namespace Match3
 {
-    class MoveAnimation : Animation
+    public class ImplodeAnimation : Animation
     {
-
         /// <summary>
-        /// Нелинейное изменение скорости: при маленьких значениях анимация замедляется, при больших - ускоряется
+        /// Нелинейное изменение размера: при значениях >1 анимация замедляется, при <1 - ускоряется
         /// </summary>
-        public double power = 1;
+        readonly double power = 1.0;
         /// <summary>
-        /// Позиция объекта в начале анимации
+        /// Масштаб в начале анимации.
         /// </summary>
-        private Vector2 beginPos;
+        readonly double beginScale;
         /// <summary>
-        /// Позиция объекта в конце анимации
+        /// Масштаб в конце анимации.
         /// </summary>
-        private Vector2 endPos;
+        readonly double endScale;
 
         /// <summary>
         /// Конструктор.
         /// </summary>
         /// <param name="linkedObject">Привязанный обеъект на игровом поле.</param>
-        /// <param name="beginPos">Позиция в начале анимации.</param>
-        /// <param name="endPos">Позиция в конце анимации.</param>
         /// <param name="blocking">Блокирует ли анимация переход в следующее состояние игры.</param>
-        public MoveAnimation(GameBoardObject linkedObject, Vector2 beginPos, Vector2 endPos, bool blocking = false)
+        public ImplodeAnimation(GameBoardObject linkedObject, double beginScale, double endScale, bool blocking = false)
         {
             this.linkedObject = linkedObject;
-            this.beginPos = beginPos;
-            this.endPos = endPos;
+            this.beginScale = beginScale;
+            this.endScale = endScale;
             this.blocking = blocking;
             duration = 0.3;
             timePassed = 0.0;
@@ -55,10 +53,8 @@ namespace Match3
                 }
                 double completionPercentage = timePassed / duration;
                 double nonlinear = Math.Pow(completionPercentage, power);
-                Vector2 diff = endPos - beginPos;
-                Vector2 diffScaled = diff * (float)nonlinear;
-                Vector2 newPos = beginPos + diffScaled;
-                linkedObject.spriteWorldPos = newPos;
+                double objectScale = Utils.MapRange(nonlinear, 0.0f, 1.0f, beginScale, endScale);
+                linkedObject.spriteAnimatedScale = (float)objectScale;
             }
         }
 
@@ -67,8 +63,7 @@ namespace Match3
         /// </summary>
         public override void OnDelete()
         {
-            // Возвращаем спрайт на место
-            linkedObject.spriteWorldPos = linkedObject.worldPos;
+            linkedObject.spriteAnimatedScale = 0.0f;
             active = false;
         }
     }

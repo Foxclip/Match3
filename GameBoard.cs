@@ -18,7 +18,7 @@ namespace Match3
         /// <summary>
         /// Список объектов на игровом поле.
         /// </summary>
-        public readonly List<GameBoardObject> objectList = new List<GameBoardObject>();
+        public List<GameBoardObject> objectList = new List<GameBoardObject>();
 
         /// <summary>
         /// Генератор случайных чисел.
@@ -71,6 +71,11 @@ namespace Match3
         /// Анимация пульсации выбранного объекта.
         /// </summary>
         public PulseAnimation selectedObjectPulseAnimation = null;
+
+        /// <summary>
+        /// Список исчезающих объектов.
+        /// </summary>
+        public List<GameBoardObject> implodingObjects = new List<GameBoardObject>();
 
         // Объекты, меняемые местами
         public GameBoardObject objectSwap1;
@@ -218,7 +223,7 @@ namespace Match3
                 return;
             }
             // Смена элементов местами
-            if(currentGamePhase == GamePhase.ElementSwap)
+            else if(currentGamePhase == GamePhase.ElementSwap)
             {
                 ComboList comboList = GetComboList();
                 if(comboList.Count == 0)
@@ -227,12 +232,11 @@ namespace Match3
                 }
                 else
                 {
-                    DeleteCombos(comboList);
                     currentGamePhase = GamePhase.ComboDeletion;
                 }
             }
             // Смена элементов обратно
-            if(currentGamePhase == GamePhase.SwapBack)
+            else if(currentGamePhase == GamePhase.SwapBack)
             {
                 // Сохранение позиций объектов
                 Vector2Int object1Pos = objectSwap1.worldPos;
@@ -260,7 +264,16 @@ namespace Match3
                 else
                 {
                     DeleteCombos(comboList);
+                    currentGamePhase = GamePhase.ElementSlide;
                 }
+            }
+            // Создание новых элементов
+            else if(currentGamePhase == GamePhase.ElementSlide)
+            {
+                objectList = objectList.Except(implodingObjects).ToList();
+                implodingObjects.Clear();
+                CreateNewObjects();
+                currentGamePhase = GamePhase.ComboDeletion;
             }
         }
 
@@ -331,15 +344,32 @@ namespace Match3
             return allComboList;
         }
 
+        /// <summary>
+        /// Запускает анимации удаления объектов.
+        /// </summary>
+        /// <param name="comboList"></param>
         public void DeleteCombos(ComboList comboList)
         {
-            // Удаляем объекты
+            Debug.WriteLine("Deleting combos");
             List<GameBoardObject> objectsToDelete = comboList.SelectMany(tempList => tempList).ToList();
-            objectList.RemoveAll(obj => objectsToDelete.Contains(obj));
+            implodingObjects.Clear();
+            foreach(GameBoardObject obj in objectsToDelete)
+            {
+                implodingObjects.Add(obj);
+                ImplodeAnimation implodeAnimation = new ImplodeAnimation(obj, 1.0, 0.0, blocking: true);
+                activeAnimations.Add(implodeAnimation);
+            }
+        }
 
+        /// <summary>
+        /// Создает новые объекты сверху.
+        /// </summary>
+        public void CreateNewObjects()
+        {
+            Debug.WriteLine("Creating new objects");
             for(int x = 0; x < 8; x++)
             {
-                // Сдвигаем элементы сверху
+                // Сдвигаем висящие элементы
                 int objectsUnder = 0;
                 for(int y = 7; y >= 0; y--)
                 {
@@ -349,6 +379,7 @@ namespace Match3
                         Vector2Int newPos = new Vector2Int(gameBoardObject.worldPos.x, 7 - objectsUnder);
                         if(gameBoardObject.worldPos != newPos)
                         {
+                            Debug.WriteLine($"Creating move animation from {gameBoardObject.worldPos} to {newPos}");
                             MoveAnimation moveAnimation = new MoveAnimation(gameBoardObject, gameBoardObject.worldPos, newPos, blocking: true);
                             activeAnimations.Add(moveAnimation);
                             gameBoardObject.worldPos = newPos;
@@ -356,6 +387,7 @@ namespace Match3
                         objectsUnder++;
                     }
                 }
+                Debug.WriteLine($"x: {x} objectsUnder: {objectsUnder}");
                 // Добавляем новые элементы
                 int newElementCount = 8 - objectsUnder;
                 for(int new_i = 0; new_i < newElementCount; new_i++)
