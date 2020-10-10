@@ -45,9 +45,19 @@ namespace Match3
         public bool pulseAnimationActive = false;
 
         /// <summary>
+        /// Время, прошедшее с начала анимации пульсации.
+        /// </summary>
+        private double pulseAnimationTimer = 0.0f;
+
+        /// <summary>
         /// Период анимации пульсации в миллисекундах.
         /// </summary>
-        public static float pulseAnimationPeriod = 1000f;
+        public static double pulseAnimationPeriod = 1000f;
+
+        /// <summary>
+        /// Сдвиг фазы анимации пульсации.
+        /// </summary>
+        public static double pulseAnimationOffset = Math.PI;
 
         /// <summary>
         /// Конструктор.
@@ -65,14 +75,6 @@ namespace Match3
         public Vector2 WorldToScreen(Vector2 vector)
         {
             return vector * Game1.cellSize + Game1.gameBoardOffset;
-        }
-
-        /// <summary>
-        /// Конвертирует координаты на игровом поле в экранные координаты.
-        /// </summary>
-        public Vector2 WorldToScreen(Vector2Int vector)
-        {
-            return vector.ToVector2() * Game1.cellSize + Game1.gameBoardOffset;
         }
 
         /// <summary>
@@ -105,17 +107,19 @@ namespace Match3
         public void SpriteAnimation(GameTime gameTime)
         {
             // Перемещение спрайта к объекту
-            spriteWorldPos = Vector2.Lerp(spriteWorldPos, worldPos.ToVector2(), 0.1f);
+            spriteWorldPos = Vector2.Lerp(spriteWorldPos, worldPos, 0.1f);
 
             // Анимация пульсации
             if(pulseAnimationActive) 
             {
-                double sinusoid = Math.Sin(gameTime.TotalGameTime.TotalMilliseconds * Math.PI * 2.0f / pulseAnimationPeriod);
+                double sinusoid = Math.Sin(pulseAnimationTimer * Math.PI * 2.0f / pulseAnimationPeriod + pulseAnimationOffset);
                 spriteAnimatedScale = (float)Utils.MapRange(sinusoid, -1, 1, 0.75, 1);
+                pulseAnimationTimer += gameTime.ElapsedGameTime.TotalMilliseconds;
             }
             else
             {
                 spriteAnimatedScale = 1.0f;
+                pulseAnimationTimer = 0.0;
             }
         }
 
@@ -124,17 +128,12 @@ namespace Match3
         /// </summary>
         public Rectangle GetScreenBoundingBox()
         {
-            // Позиция спрайта на экране
             Vector2 spriteScreenPos = WorldToScreen(spriteWorldPos);
-            // Масштабирование спрайта
             float finalSpriteScale = Game1.cellSize / sprite.Width * spriteScale * Game1.globalSpriteScale;
-            // Размер спрайта на экране
             int spriteScreenSize = (int)(sprite.Width * finalSpriteScale);
-            // bounding box
             int x = (int)(spriteScreenPos.X - spriteScreenSize / 2);
             int y = (int)(spriteScreenPos.Y - spriteScreenSize / 2);
             Rectangle boundingBox = new Rectangle(x, y, spriteScreenSize, spriteScreenSize);
-
             return boundingBox;
         }
 

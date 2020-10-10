@@ -111,16 +111,20 @@ namespace Match3
             {
                 Debug.WriteLine("LEFT MOUSE");
                 Point mousePos = mouseState.Position;
+
+                // Выбор объекта
                 foreach(GameBoardObject obj in gameBoard.objectList)
                 {
                     Rectangle boundingBox = obj.GetScreenBoundingBox();
                     if(boundingBox.Contains(mousePos))
                     {
+                        // Если нет выбранного объекта или выбирается тот же объект
                         if(selectedObject is null || obj == selectedObject)
                         {
                             selectedObject = obj;
                             obj.pulseAnimationActive = true;
                         }
+                        // Если выбирается другой объект
                         if(selectedObject != null && obj != selectedObject)
                         {
                             selectedObject.pulseAnimationActive = false;
@@ -135,7 +139,7 @@ namespace Match3
             previousKeyboardState = keyboardState;
             previousMouseState = mouseState;
 
-            // Двигаем спрайты
+            // Анимируем спрайты
             foreach(GameBoardObject gameBoardObject in gameBoard.objectList)
             {
                 gameBoardObject.SpriteAnimation(gameTime);

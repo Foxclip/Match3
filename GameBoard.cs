@@ -30,7 +30,7 @@ namespace Match3
                 for(int y = 0; y < 8; y++)
                 {
                     Vector2Int pos = new Vector2Int(x, y);
-                    GameBoardObject randomObject = CreateRandomElement(pos, pos.ToVector2());
+                    GameBoardObject randomObject = CreateRandomElement(pos, pos);
                     objectList.Add(randomObject);
                 }
             }
@@ -158,7 +158,7 @@ namespace Match3
                 for(int new_i = 0; new_i < newElementCount; new_i++)
                 {
                     Vector2Int pos = new Vector2Int(x, new_i);
-                    Vector2 spritePos = pos.ToVector2() - new Vector2(0, newElementCount);
+                    Vector2 spritePos = pos - new Vector2(0, newElementCount);
                     GameBoardObject randomObject = CreateRandomElement(pos, spritePos);
                     objectList.Add(randomObject);
                 }
