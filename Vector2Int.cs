@@ -19,6 +19,11 @@ namespace Match3
             this.y = y;
         }
 
+        /// <summary>
+        /// Длина вектора.
+        /// </summary>
+        public double Magnitude { get => Math.Sqrt(x * x + y * y); }
+
         public override bool Equals(object obj)
         {
             return base.Equals(obj);
@@ -47,6 +52,11 @@ namespace Match3
         public static Vector2Int operator +(Vector2Int one, Vector2Int another)
         {
             return new Vector2Int(one.x + another.x, one.y + another.y);
+        }
+
+        public static Vector2Int operator -(Vector2Int one, Vector2Int another)
+        {
+            return new Vector2Int(one.x - another.x, one.y - another.y);
         }
 
         public static implicit operator Vector2(Vector2Int v2i)

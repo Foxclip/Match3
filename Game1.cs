@@ -2,12 +2,13 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Match3
 {
     public class Game1 : Game
     {
-        private GraphicsDeviceManager _graphics;
+        private readonly GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
 
         // Игровое поле
@@ -35,6 +36,31 @@ namespace Match3
         private KeyboardState previousKeyboardState;
         private MouseState mouseState;
         private MouseState previousMouseState;
+
+        /// <summary>
+        /// Фазы игры.
+        /// </summary>
+        private enum GamePhase
+        {
+            /// <summary>
+            /// Обычное состояние, игрок может совершать действия.
+            /// </summary>
+            Normal,
+            /// <summary>
+            /// Перестановка элементов.
+            /// </summary>
+            ElementSwap,
+        }
+
+        /// <summary>
+        /// Текущая фаза игры. Должна устанавливаться не напрямую, а через pendingGamePhase.
+        /// </summary>
+        private GamePhase currentGamePhase = GamePhase.Normal;
+
+        /// <summary>
+        /// Какое фаза игры будет в следующем кадре.
+        /// </summary>
+        private GamePhase pendingGamePhase = GamePhase.Normal;
 
         // Выбранный объект
         private GameBoardObject selectedObject = null;
@@ -90,8 +116,58 @@ namespace Match3
             return mouseState.LeftButton == ButtonState.Pressed && previousMouseState.LeftButton != ButtonState.Pressed;
         }
 
+        /// <summary>
+        /// Выбор объекта на экране.
+        /// </summary>
+        /// <param name="mousePos">Позиция мыши в экранных координатах.</param>
+        private void SelectObject(Point mousePos)
+        {
+            // Выбор объекта
+            foreach(GameBoardObject clickedObject in gameBoard.objectList.Reverse<GameBoardObject>())
+            {
+                Rectangle boundingBox = clickedObject.GetScreenBoundingBox();
+                if(boundingBox.Contains(mousePos))
+                {
+                    Debug.WriteLine($"CLICKED ON {clickedObject.GetType()}");
+                    // Если нет выбранного объекта
+                    if(selectedObject is null)
+                    {
+                        selectedObject = clickedObject;
+                        selectedObject.pulseAnimationActive = true;
+                        Debug.WriteLine($"Launching animation on {clickedObject}");
+                    }
+                    // Если выбирается тот же объект
+                    else if(clickedObject == selectedObject)
+                    {
+                        selectedObject.pulseAnimationActive = false;
+                        selectedObject = null;
+                    }
+                    // Если выбирается другой объект
+                    else
+                    {
+                        // Если соседний объект
+                        if((clickedObject.worldPos - selectedObject.worldPos).Magnitude == 1.0)
+                        {
+                            // Меняем местами их позиции
+                            Vector2Int clickedObjectPos = clickedObject.worldPos;
+                            Vector2Int selectedObjectPos = selectedObject.worldPos;
+                            clickedObject.worldPos = selectedObjectPos;
+                            selectedObject.worldPos = clickedObjectPos;
+                            pendingGamePhase = GamePhase.ElementSwap;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Обновление состояния игры. Вызывается автоматически.
+        /// </summary>
         protected override void Update(GameTime gameTime)
         {
+            pendingGamePhase = currentGamePhase;
+
             // Обработка клавиатуры
             keyboardState = Keyboard.GetState();
             if(GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Escape))
@@ -100,8 +176,11 @@ namespace Match3
             }
             if(KeyPressed(Keys.Space))
             {
-                gameBoard.CheckCombo(false);
-                gameBoard.CheckCombo(true);
+                if(currentGamePhase == GamePhase.Normal)
+                {
+                    gameBoard.CheckCombo(false);
+                    gameBoard.CheckCombo(true);
+                }
                 Debug.WriteLine("SPACE");
             }
 
@@ -112,26 +191,10 @@ namespace Match3
                 Debug.WriteLine("LEFT MOUSE");
                 Point mousePos = mouseState.Position;
 
-                // Выбор объекта
-                foreach(GameBoardObject obj in gameBoard.objectList)
+                if(currentGamePhase == GamePhase.Normal)
                 {
-                    Rectangle boundingBox = obj.GetScreenBoundingBox();
-                    if(boundingBox.Contains(mousePos))
-                    {
-                        // Если нет выбранного объекта или выбирается тот же объект
-                        if(selectedObject is null || obj == selectedObject)
-                        {
-                            selectedObject = obj;
-                            obj.pulseAnimationActive = true;
-                        }
-                        // Если выбирается другой объект
-                        if(selectedObject != null && obj != selectedObject)
-                        {
-                            selectedObject.pulseAnimationActive = false;
-                            selectedObject = obj;
-                            obj.pulseAnimationActive = true;
-                        }
-                    }
+                    Debug.WriteLine("SELECT OBJECT");
+                    SelectObject(mousePos);
                 }
             }
 
@@ -145,9 +208,16 @@ namespace Match3
                 gameBoardObject.SpriteAnimation(gameTime);
             }
 
+            // Меняем состояние игры
+            currentGamePhase = pendingGamePhase;
+
             base.Update(gameTime);
         }
 
+        /// <summary>
+        /// Отрисовка объектов на экране. Вызывается автоматически.
+        /// </summary>
+        /// <param name="gameTime"></param>
         protected override void Draw(GameTime gameTime)
         {
             // Заливка фона
