@@ -42,15 +42,21 @@ namespace Match3
 
         // Кнопка PLay
         private Button playButton;
+        // Кнопка Ok
+        private Button okButton;
 
         // Текстура верхней панели
         private Texture2D topPanel;
         // Шрифт
         private SpriteFont font;
+        // Большой шрифт
+        private SpriteFont bigFont;
         // Сдвиг текста с очками (от левого верхнего угла)
         private Vector2 scoreTextOffset = new Vector2(20f, 15f);
         // Сдвиг текста с оставшимся временем (от правого верхнего угла)
         private Vector2 timeTextOffset = new Vector2(20f, 15f);
+        // Сдвиг надписи GameOver
+        private Vector2 gameOverTextOffset = new Vector2(width / 2, height / 4);
 
         public Game1()
         {
@@ -87,15 +93,20 @@ namespace Match3
 
             // Спрайт кнопки Play
             Texture2D playButtonSprite = Content.Load<Texture2D>("play_button");
+            // Спрайт кнопки Ok
+            Texture2D okButtonSprite = Content.Load<Texture2D>("ok_button");
 
             // Загрузка шрифтов
             font = Content.Load<SpriteFont>("Arial");
+            bigFont = Content.Load<SpriteFont>("Arial_big");
 
             // Игровое поле, должно быть инициализировано после загрузки спрайтов
             gameBoard = new GameBoard();
 
             // Кнопка Play
-            playButton = new Button(playButtonSprite, new Vector2(width / 2, height / 2));
+            playButton = new Button(playButtonSprite, new Vector2(width / 2, height / 1.5f));
+            // Кнопка Ok
+            okButton = new Button(okButtonSprite, new Vector2(width / 2, height / 2));
 
         }
 
@@ -145,6 +156,15 @@ namespace Match3
                         gameBoard.currentGamePhase = GamePhase.Normal;
                     }
                 }
+                // Экран Game Over
+                else if(gameBoard.currentGamePhase == GamePhase.GameOver)
+                {
+                    // Нажатие на кнопку Ok
+                    if(okButton.GetScreenBoundingBox().Contains(mousePos))
+                    {
+                        gameBoard = new GameBoard();
+                    }
+                }
                 // Обычный режим игры
                 else if(gameBoard.currentGamePhase == GamePhase.Normal)
                 {
@@ -173,7 +193,10 @@ namespace Match3
             gameBoard.activeAnimations = gameBoard.activeAnimations.Except(animationsToDelete).ToList();
 
             // Уменьшаем остаток времени
-            gameBoard.timeRemaining -= gameTime.ElapsedGameTime.TotalSeconds;
+            if(gameBoard.currentGamePhase != GamePhase.MainMenu && gameBoard.currentGamePhase != GamePhase.GameOver)
+            {
+                gameBoard.timeRemaining -= gameTime.ElapsedGameTime.TotalSeconds;
+            }
 
             base.Update(gameTime);
         }
@@ -181,7 +204,6 @@ namespace Match3
         /// <summary>
         /// Отрисовка объектов на экране. Вызывается автоматически.
         /// </summary>
-        /// <param name="gameTime"></param>
         protected override void Draw(GameTime gameTime)
         {
             // Заливка фона
@@ -194,8 +216,18 @@ namespace Match3
             {
                 playButton.Draw(_spriteBatch);
             }
+            // Экран Game Over
+            else if(gameBoard.currentGamePhase == GamePhase.GameOver)
+            {
+                Vector2 gameOverTextSize = bigFont.MeasureString("Game Over");
+                Vector2 halfSize = gameOverTextSize / 2;
+                Vector2 finalGameOverTextOffset = gameOverTextOffset - halfSize;
+                _spriteBatch.DrawString(bigFont, "Game Over", finalGameOverTextOffset, Color.Orange);
+                _spriteBatch.DrawString(font, $"Очки: {gameBoard.score}", finalGameOverTextOffset + new Vector2(10.0f, gameOverTextSize.Y), Color.Yellow);
+                okButton.Draw(_spriteBatch);
+            }
             // Основной режим игры
-            else if(gameBoard.currentGamePhase != GamePhase.GameOver)
+            else
             {
                 // Объектоы на игровом поле
                 gameBoard.objectList.ForEach(obj => obj.Draw(_spriteBatch));

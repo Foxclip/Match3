@@ -97,7 +97,7 @@ namespace Match3
         /// <summary>
         /// Оставшееся время в секундах.
         /// </summary>
-        public double timeRemaining = 60.0;
+        public double timeRemaining = 1.0;
 
         /// <summary>
         /// Конструктор.
@@ -235,6 +235,12 @@ namespace Match3
         /// </summary>
         public void ChangeState()
         {
+            // Если закончилось время
+            if(timeRemaining < 0)
+            {
+                currentGamePhase = GamePhase.GameOver;
+                return;
+            }
             // Если есть блокирующие анимации, то состояние изменять нельзя
             if(activeAnimations.FindAll(animation => animation.blocking).Count > 0)
             {
