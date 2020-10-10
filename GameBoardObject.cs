@@ -87,7 +87,7 @@ namespace Match3
         public Rectangle GetScreenBoundingBox()
         {
             Vector2 spriteScreenPos = WorldToScreen(spriteWorldPos);
-            float finalSpriteScale = Game1.cellSize / sprite.Width * spriteScale * Game1.globalSpriteScale;
+            float finalSpriteScale = Game1.cellSize / sprite.Width;
             int spriteScreenSize = (int)(sprite.Width * finalSpriteScale);
             int x = (int)(spriteScreenPos.X - spriteScreenSize / 2);
             int y = (int)(spriteScreenPos.Y - spriteScreenSize / 2);
