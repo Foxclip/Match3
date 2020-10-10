@@ -53,6 +53,11 @@ namespace Match3
         }
 
         /// <summary>
+        /// Количество очков.
+        /// </summary>
+        public int score = 0;
+
+        /// <summary>
         /// Текущая фаза игры.
         /// </summary>
         public GamePhase currentGamePhase = GamePhase.Normal;
@@ -350,9 +355,9 @@ namespace Match3
         /// <param name="comboList"></param>
         public void DeleteCombos(ComboList comboList)
         {
-            Debug.WriteLine("Deleting combos");
             List<GameBoardObject> objectsToDelete = comboList.SelectMany(tempList => tempList).ToList();
             implodingObjects.Clear();
+            score += objectsToDelete.Count;
             foreach(GameBoardObject obj in objectsToDelete)
             {
                 implodingObjects.Add(obj);

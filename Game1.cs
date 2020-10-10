@@ -29,16 +29,25 @@ namespace Match3
         // Масштаб спрайтов
         public readonly static float globalSpriteScale = 0.9f;
         // Сдвиг игрового поля в пикселях, чтобы оно было не с краю
-        public readonly static Vector2 gameBoardOffset = new Vector2(45f, 45f);
+        public readonly static Vector2 gameBoardOffset = new Vector2(45f, 95f);
         // Размеры окна
         public readonly static int width = 615;
-        public readonly static int height = 615;
+        public readonly static int height = 665;
 
         // Текущее и предыдущее состояния клавиатуры и мыши
         private KeyboardState keyboardState;
         private KeyboardState previousKeyboardState;
         private MouseState mouseState;
         private MouseState previousMouseState;
+
+        // Текстура верхней панели
+        private Texture2D topPanel;
+        // ascii шрифт
+        private SpriteFont ascii_font;
+        // Русский шрифт
+        private SpriteFont russian_font;
+        // Сдвиг текста
+        private Vector2 textOffset = new Vector2(20f, 15f);
 
         public Game1()
         {
@@ -55,6 +64,10 @@ namespace Match3
             _graphics.PreferredBackBufferHeight = height;
             _graphics.ApplyChanges();
 
+            // Создание верхней панели
+            topPanel = new Texture2D(GraphicsDevice, 1, 1);
+            topPanel.SetData(new[] { Color.White });
+
             base.Initialize();
         }
 
@@ -68,6 +81,10 @@ namespace Match3
             triangleSprite = Content.Load<Texture2D>("triangle");
             hexagonSprite = Content.Load<Texture2D>("hexagon");
             diamondSprite = Content.Load<Texture2D>("diamond");
+
+            // Загрузка шрифтов
+            ascii_font = Content.Load<SpriteFont>("Arial_ascii");
+            russian_font = Content.Load<SpriteFont>("Arial_russian");
 
             // Игровое поле, должно быть инициализировано после загрузки спрайтов
             gameBoard = new GameBoard();
@@ -172,8 +189,17 @@ namespace Match3
             {
                 gameBoardObject.Draw(_spriteBatch);
             }
+            // Верхняя панель
+            _spriteBatch.Draw(topPanel, new Rectangle(0, 0, width, 50), Color.Black);
+            // Количество очков
+            Vector2 position1 = new Vector2(0, 0) + textOffset;
+            _spriteBatch.DrawString(russian_font, $"Очки", position1, Color.Yellow);
+            Vector2 size = russian_font.MeasureString("Очки");
+            Vector2 position2 = new Vector2(size.X, 0) + textOffset;
+            _spriteBatch.DrawString(ascii_font, $": {gameBoard.score}", position2, Color.Yellow);
 
             _spriteBatch.End();
+
 
             base.Draw(gameTime);
         }
