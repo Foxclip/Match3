@@ -47,8 +47,10 @@ namespace Match3
         private Texture2D topPanel;
         // Шрифт
         private SpriteFont font;
-        // Сдвиг текста
-        private Vector2 textOffset = new Vector2(20f, 15f);
+        // Сдвиг текста с очками (от левого верхнего угла)
+        private Vector2 scoreTextOffset = new Vector2(20f, 15f);
+        // Сдвиг текста с оставшимся временем (от правого верхнего угла)
+        private Vector2 timeTextOffset = new Vector2(20f, 15f);
 
         public Game1()
         {
@@ -170,6 +172,9 @@ namespace Match3
             animationsToDelete.ForEach(animation => animation.OnDelete());
             gameBoard.activeAnimations = gameBoard.activeAnimations.Except(animationsToDelete).ToList();
 
+            // Уменьшаем остаток времени
+            gameBoard.timeRemaining -= gameTime.ElapsedGameTime.TotalSeconds;
+
             base.Update(gameTime);
         }
 
@@ -197,8 +202,12 @@ namespace Match3
                 // Верхняя панель
                 _spriteBatch.Draw(topPanel, new Rectangle(0, 0, width, 50), Color.Black);
                 // Количество очков
-                Vector2 textPosition = new Vector2(0, 0) + textOffset;
-                _spriteBatch.DrawString(font, $"Очки: {gameBoard.score}", textPosition, Color.Yellow);
+                Vector2 scoreTextPosition = new Vector2(0, 0) + scoreTextOffset;
+                _spriteBatch.DrawString(font, $"Очки: {gameBoard.score}", scoreTextPosition, Color.Yellow);
+                // Оставшееся время
+                Vector2 timeTextSize = font.MeasureString($"Время: {gameBoard.timeRemaining:0}");
+                Vector2 timeTextPosition = new Vector2(width - timeTextSize.X - timeTextOffset.X, timeTextOffset.Y);
+                _spriteBatch.DrawString(font, $"Время: {gameBoard.timeRemaining:0}", timeTextPosition, Color.Yellow);
             }
 
             _spriteBatch.End();

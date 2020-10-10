@@ -95,6 +95,11 @@ namespace Match3
         public GameBoardObject objectSwap2;
 
         /// <summary>
+        /// Оставшееся время в секундах.
+        /// </summary>
+        public double timeRemaining = 60.0;
+
+        /// <summary>
         /// Конструктор.
         /// </summary>
         public GameBoard()
