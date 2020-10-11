@@ -22,7 +22,7 @@ namespace Match3
         /// <summary>
         /// Конструктор.
         /// </summary>
-        /// <param name="baseSprite">Спрайт базового объекта.</param>
+        /// <param name="baseObject">Базовый объект.</param>
         /// <param name="vertical">Направление бонуса.</param>
         /// <param name="pos">Клетка игрового поля.</param>
         /// <param name="spritePos">Позиция спрайта.</param>

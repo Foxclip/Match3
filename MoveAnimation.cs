@@ -23,19 +23,39 @@ namespace Match3
         private Vector2 endPos;
 
         /// <summary>
-        /// Конструктор.
+        /// Конструктор анимации с таймером.
         /// </summary>
         /// <param name="linkedObject">Привязанный объект на игровом поле.</param>
         /// <param name="beginPos">Позиция в начале анимации.</param>
         /// <param name="endPos">Позиция в конце анимации.</param>
+        /// <param name="duration">Длительность анимации.</param>
         /// <param name="blocking">Блокирует ли анимация переход в следующее состояние игры.</param>
-        public MoveAnimation(GameBoardObject linkedObject, Vector2 beginPos, Vector2 endPos, bool blocking = false)
+        public MoveAnimation(GenericObject linkedObject, Vector2 beginPos, Vector2 endPos, double duration, bool blocking = false)
         {
             this.linkedObject = linkedObject;
             this.beginPos = beginPos;
             this.endPos = endPos;
             this.blocking = blocking;
-            duration = 0.3;
+            this.duration = duration;
+            timePassed = 0.0;
+            active = true;
+        }
+
+        /// <summary>
+        /// Конструктор анимации с постоянной скоростью.
+        /// </summary>
+        /// <param name="linkedObject">Привязанный объект на игровом поле.</param>
+        /// <param name="speed">Скрость движения объекта.</param>
+        /// <param name="beginPos">Позиция в начале анимации.</param>
+        /// <param name="endPos">Позиция в конце анимации.</param>
+        /// <param name="blocking">Блокирует ли анимация переход в следующее состояние игры.</param>
+        public MoveAnimation(GenericObject linkedObject, double speed, Vector2 beginPos, Vector2 endPos, bool blocking = false)
+        {
+            this.linkedObject = linkedObject;
+            this.beginPos = beginPos;
+            this.endPos = endPos;
+            this.blocking = blocking;
+            duration = Vector2.Distance(beginPos, endPos) / speed;
             timePassed = 0.0;
             active = true;
         }
@@ -67,8 +87,7 @@ namespace Match3
         /// </summary>
         public override void OnDelete()
         {
-            // Возвращаем спрайт на место
-            linkedObject.spriteWorldPos = linkedObject.worldPos;
+            linkedObject.spriteWorldPos = endPos;
             active = false;
         }
     }

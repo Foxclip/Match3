@@ -23,6 +23,7 @@ namespace Match3
         public static Texture2D hexagonSprite;
         public static Texture2D diamondSprite;
         public static Texture2D lineBonusSprite;
+        public static Texture2D destroyerSprite;
 
         // Размер клетки игрового поля в пикселях
         public readonly static float cellSize = 75f;
@@ -96,6 +97,7 @@ namespace Match3
             hexagonSprite = Content.Load<Texture2D>("hexagon");
             diamondSprite = Content.Load<Texture2D>("diamond");
             lineBonusSprite = Content.Load<Texture2D>("line_bonus");
+            destroyerSprite = Content.Load<Texture2D>("destroyer");
 
             // Спрайт кнопки Play
             Texture2D playButtonSprite = Content.Load<Texture2D>("play_button");
@@ -229,7 +231,9 @@ namespace Match3
                 Vector2 halfSize = gameOverTextSize / 2;
                 Vector2 finalGameOverTextOffset = gameOverTextOffset - halfSize;
                 _spriteBatch.DrawString(bigFont, "Game Over", finalGameOverTextOffset, Color.Orange);
-                _spriteBatch.DrawString(font, $"Очки: {gameBoard.score}", finalGameOverTextOffset + new Vector2(10.0f, gameOverTextSize.Y), Color.Yellow);
+                Vector2 pointsTextOffset = new Vector2(10.0f, gameOverTextSize.Y);
+                Vector2 pointsTextPosition = finalGameOverTextOffset + pointsTextOffset;
+                _spriteBatch.DrawString(font, $"Очки: {gameBoard.score}", pointsTextPosition, Color.Yellow);
                 okButton.Draw(_spriteBatch);
             }
             // Основной режим игры
@@ -237,6 +241,8 @@ namespace Match3
             {
                 // Объектоы на игровом поле
                 gameBoard.objectList.ForEach(obj => obj.Draw(_spriteBatch));
+                // Разрушители
+                gameBoard.destroyerList.ForEach(obj => obj.Draw(_spriteBatch));
                 // Верхняя панель
                 _spriteBatch.Draw(topPanel, new Rectangle(0, 0, width, 50), Color.Black);
                 // Количество очков

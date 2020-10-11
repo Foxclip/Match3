@@ -21,6 +21,11 @@ namespace Match3
         public List<GameBoardObject> objectList = new List<GameBoardObject>();
 
         /// <summary>
+        /// Список разрушителей.
+        /// </summary>
+        public List<Destroyer> destroyerList = new List<Destroyer>();
+
+        /// <summary>
         /// Генератор случайных чисел.
         /// </summary>
         public readonly Random random = new Random();
@@ -204,8 +209,8 @@ namespace Match3
             object1.worldPos = object2Pos;
             object2.worldPos = object1Pos;
             // Запускаем анимации
-            MoveAnimation moveAnimation1 = new MoveAnimation(object1, object1Pos, object2Pos, blocking: true);
-            MoveAnimation moveAnimation2 = new MoveAnimation(object2, object2Pos, object1Pos, blocking: true);
+            MoveAnimation moveAnimation1 = new MoveAnimation(object1, object1Pos, object2Pos, duration: 0.3, blocking: true);
+            MoveAnimation moveAnimation2 = new MoveAnimation(object2, object2Pos, object1Pos, duration: 0.3, blocking: true);
             activeAnimations.Add(moveAnimation1);
             activeAnimations.Add(moveAnimation2);
         }
@@ -269,8 +274,8 @@ namespace Match3
                 objectSwap1.worldPos = object2Pos;
                 objectSwap2.worldPos = object1Pos;
                 // Запуск анимации
-                MoveAnimation moveAnimation1 = new MoveAnimation(objectSwap1, object1Pos, object2Pos, blocking: true);
-                MoveAnimation moveAnimation2 = new MoveAnimation(objectSwap2, object2Pos, object1Pos, blocking: true);
+                MoveAnimation moveAnimation1 = new MoveAnimation(objectSwap1, object1Pos, object2Pos, duration: 0.3, blocking: true);
+                MoveAnimation moveAnimation2 = new MoveAnimation(objectSwap2, object2Pos, object1Pos, duration: 0.3, blocking: true);
                 activeAnimations.Add(moveAnimation1);
                 activeAnimations.Add(moveAnimation2);
 
@@ -371,9 +376,8 @@ namespace Match3
         }
 
         /// <summary>
-        /// Запускает анимации удаления объектов.
+        /// Удаление комбинаций.
         /// </summary>
-        /// <param name="comboList"></param>
         public void DeleteCombos(ComboList comboList)
         {
             // Бонус Line
@@ -391,10 +395,42 @@ namespace Match3
                 activeAnimations.Add(spawnAnimation);
             }
 
-            // Запуск анимации исчезновения
+            // Список удаляемых объектов
             List<GameBoardObject> objectsToDelete = comboList.SelectMany(tempList => tempList).ToList();
-            implodingObjects.Clear();
             score += objectsToDelete.Count;
+
+            // Срабатывание бонусов
+            List<LineBonus> lineBonuses = objectsToDelete.FindAll(obj => obj.GetType() == typeof(LineBonus)).Cast<LineBonus>().ToList();
+            foreach(LineBonus lineBonus in lineBonuses)
+            {
+                Debug.WriteLine("Creating destroyers");
+                // Скорость разрушителей
+                Vector2 destroyerDestination1;
+                Vector2 destroyerDestination2;
+                if(lineBonus.vertical)
+                {
+                    destroyerDestination1 = new Vector2(lineBonus.worldPos.x, -1.0f);
+                    destroyerDestination2 = new Vector2(lineBonus.worldPos.x, 8.0f);
+                }
+                else
+                {
+                    destroyerDestination1 = new Vector2(-1.0f, lineBonus.worldPos.y);
+                    destroyerDestination2 = new Vector2(8.0f, lineBonus.worldPos.y);
+                }
+                // Создание разрушителей
+                Destroyer destroyer1 = new Destroyer(lineBonus.worldPos);
+                Destroyer destroyer2 = new Destroyer(lineBonus.worldPos);
+                destroyerList.Add(destroyer1);
+                destroyerList.Add(destroyer2);
+                // Запуск анимации
+                MoveAnimation moveAnimation1 = new MoveAnimation(destroyer1, speed: 10.0, lineBonus.worldPos, destroyerDestination1, blocking: true);
+                MoveAnimation moveAnimation2 = new MoveAnimation(destroyer2, speed: 10.0, lineBonus.worldPos, destroyerDestination2, blocking: true);
+                activeAnimations.Add(moveAnimation1);
+                activeAnimations.Add(moveAnimation2);
+            }
+
+            // Запуск анимации исчезновения
+            implodingObjects.Clear();
             foreach(GameBoardObject obj in objectsToDelete)
             {
                 implodingObjects.Add(obj);
@@ -421,7 +457,7 @@ namespace Match3
                         Vector2Int newPos = new Vector2Int(gameBoardObject.worldPos.x, 7 - objectsUnder);
                         if(gameBoardObject.worldPos != newPos)
                         {
-                            MoveAnimation moveAnimation = new MoveAnimation(gameBoardObject, gameBoardObject.worldPos, newPos, blocking: true);
+                            MoveAnimation moveAnimation = new MoveAnimation(gameBoardObject, gameBoardObject.worldPos, newPos, duration: 0.3, blocking: true);
                             activeAnimations.Add(moveAnimation);
                             gameBoardObject.worldPos = newPos;
                         }
@@ -439,7 +475,7 @@ namespace Match3
                     GameBoardObject randomObject = CreateRandomElement(pos, spritePos);
                     objectList.Add(randomObject);
                     // Запуск анимации
-                    MoveAnimation moveAnimation = new MoveAnimation(randomObject, spritePos, pos, blocking: true);
+                    MoveAnimation moveAnimation = new MoveAnimation(randomObject, spritePos, pos, duration: 0.3, blocking: true);
                     activeAnimations.Add(moveAnimation);
                 }
             }

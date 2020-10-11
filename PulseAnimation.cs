@@ -11,7 +11,7 @@ namespace Match3
     {
 
         /// <summary>
-        /// Период анимациию
+        /// Период анимации.
         /// </summary>
         public double period = 1;
         /// <summary>
@@ -53,6 +53,7 @@ namespace Match3
         {
             // Возвращаем исходный масштаб
             linkedObject.spriteAnimatedScale = 1.0f;
+
             active = false;
         }
     }

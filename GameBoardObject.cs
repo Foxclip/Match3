@@ -12,7 +12,7 @@ namespace Match3
     /// <summary>
     /// Объект на игровом поле.
     /// </summary>
-    public class GameBoardObject : IBoundingBox, IDrawable
+    public class GameBoardObject : GenericObject, IBoundingBox, IDrawable
     {
         public enum GameBoardObjectType
         {
@@ -34,26 +34,6 @@ namespace Match3
         public Vector2Int worldPos;
 
         /// <summary>
-        /// Спрайт объекта.
-        /// </summary>
-        public Texture2D sprite;
-
-        /// <summary>
-        /// Позиция спрайта. Если отличается от позиции объекта, спрайт начинает перемещаться в позицию объекта.
-        /// </summary>
-        public Vector2 spriteWorldPos;
-
-        /// <summary>
-        /// Масштабирование спрайта.
-        /// </summary>
-        public float spriteScale = 1.0f;
-
-        /// <summary>
-        /// Множитель мвсштаба управляемый анимацией.
-        /// </summary>
-        public float spriteAnimatedScale = 1.0f;
-
-        /// <summary>
         /// Конструктор.
         /// </summary>
         /// <param name="pos">Клетка игрового поля.</param>
@@ -66,7 +46,7 @@ namespace Match3
         /// <summary>
         /// Конвертирует координаты на игровом поле в экранные координаты.
         /// </summary>
-        public Vector2 WorldToScreen(Vector2 vector)
+        public static Vector2 WorldToScreen(Vector2 vector)
         {
             return vector * Game1.cellSize + Game1.gameBoardOffset;
         }
@@ -74,25 +54,10 @@ namespace Match3
         /// <summary>
         /// Конвертирует координаты на экране в мировые координаты.
         /// </summary>
-        public Vector2 ScreenToWorld(int x, int y)
+        public static Vector2 ScreenToWorld(int x, int y)
         {
             Vector2 vector = new Vector2(x, y);
             return (vector - Game1.gameBoardOffset) / Game1.cellSize;
-        }
-
-        /// <summary>
-        /// Рисует объект на экране.
-        /// </summary>
-        public virtual void Draw(SpriteBatch spriteBatch)
-        {
-            // Позиция спрайта на экране
-            Vector2 spriteScreenPos = WorldToScreen(spriteWorldPos);
-            // Центр спрайта
-            Vector2 spriteOffset = new Vector2(sprite.Width / 2, sprite.Height / 2);
-            // Масштабирование спрайта
-            float finalSpriteScale = Game1.cellSize / sprite.Width * spriteScale * spriteAnimatedScale * Game1.globalSpriteScale;
-            // Отрисовка спрайта
-            spriteBatch.Draw(sprite, spriteScreenPos, null, Color.White, 0f, spriteOffset, finalSpriteScale, SpriteEffects.None, 0f);
         }
 
         /// <summary>

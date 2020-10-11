@@ -11,7 +11,7 @@ namespace Match3
         /// <summary>
         /// Привязанный объект на игровом поле.
         /// </summary>
-        protected GameBoardObject linkedObject;
+        protected GenericObject linkedObject;
         /// <summary>
         /// Длительность анимации
         /// </summary>
