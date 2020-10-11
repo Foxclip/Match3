@@ -190,7 +190,8 @@ namespace Match3
             }
 
             // Действие разрушителей
-            foreach(Destroyer destroyer in gameBoard.destroyerList)
+            List<Destroyer> destroyerListCopy = new List<Destroyer>(gameBoard.destroyerList);
+            foreach(Destroyer destroyer in destroyerListCopy)
             {
                 foreach(GameBoardObject gameBoardObject in gameBoard.objectList)
                 {
@@ -203,6 +204,11 @@ namespace Match3
                         ScaleAnimation implodeAnimation = new ScaleAnimation(gameBoardObject, 1.0, 0.0, blocking: true);
                         gameBoard.activeAnimations.Add(implodeAnimation);
                         gameBoard.score++;
+                        // Если это LineBonus
+                        if(gameBoardObject.GetType() == typeof(LineBonus))
+                        {
+                            gameBoard.TriggerLineBonus((LineBonus)gameBoardObject);
+                        }
                     }
                 }
             }

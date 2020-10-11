@@ -119,6 +119,18 @@ namespace Match3
                     objectList.Add(randomObject);
                 }
             }
+
+            ////////////////////////////////////
+            GameBoardObject gameBoardObject = GetObjectAtPosition(3, 3);
+            objectList.Remove(gameBoardObject);
+            LineBonus lineBonus = new LineBonus(gameBoardObject, true, gameBoardObject.worldPos, gameBoardObject.worldPos);
+            objectList.Add(lineBonus);
+
+            GameBoardObject gameBoardObject2 = GetObjectAtPosition(3, 6);
+            objectList.Remove(gameBoardObject2);
+            LineBonus lineBonus2 = new LineBonus(gameBoardObject2, false, gameBoardObject2.worldPos, gameBoardObject2.worldPos);
+            objectList.Add(lineBonus2);
+
         }
 
         /// <summary>
@@ -376,6 +388,51 @@ namespace Match3
         }
 
         /// <summary>
+        /// Активирует бонус Line.
+        /// </summary>
+        public void TriggerLineBonus(LineBonus lineBonus)
+        {
+            Debug.WriteLine("Creating destroyers");
+            // Скорость разрушителей
+            Vector2 destroyerDestination1;
+            Vector2 destroyerDestination2;
+            if(lineBonus.vertical)
+            {
+                destroyerDestination1 = new Vector2(lineBonus.worldPos.x, -1.0f);
+                destroyerDestination2 = new Vector2(lineBonus.worldPos.x, 8.0f);
+            }
+            else
+            {
+                destroyerDestination1 = new Vector2(-1.0f, lineBonus.worldPos.y);
+                destroyerDestination2 = new Vector2(8.0f, lineBonus.worldPos.y);
+            }
+            // Создание разрушителей
+            Destroyer destroyer1 = new Destroyer(lineBonus.worldPos);
+            Destroyer destroyer2 = new Destroyer(lineBonus.worldPos);
+            destroyerList.Add(destroyer1);
+            destroyerList.Add(destroyer2);
+            // Запуск анимации
+            MoveAnimation moveAnimation1 = new MoveAnimation(
+                destroyer1,
+                speed: 10.0,
+                lineBonus.worldPos,
+                destroyerDestination1,
+                blocking: true,
+                finishedCallback: _ => destroyerList.Remove(destroyer1)
+            );
+            MoveAnimation moveAnimation2 = new MoveAnimation(
+                destroyer2,
+                speed: 10.0,
+                lineBonus.worldPos,
+                destroyerDestination2,
+                blocking: true,
+                finishedCallback: _ => destroyerList.Remove(destroyer2)
+            );
+            activeAnimations.Add(moveAnimation1);
+            activeAnimations.Add(moveAnimation2);
+        }
+
+        /// <summary>
         /// Удаление комбинаций.
         /// </summary>
         public void DeleteCombos(ComboList comboList)
@@ -401,47 +458,7 @@ namespace Match3
 
             // Срабатывание бонусов
             List<LineBonus> lineBonuses = objectsToDelete.FindAll(obj => obj.GetType() == typeof(LineBonus)).Cast<LineBonus>().ToList();
-            foreach(LineBonus lineBonus in lineBonuses)
-            {
-                Debug.WriteLine("Creating destroyers");
-                // Скорость разрушителей
-                Vector2 destroyerDestination1;
-                Vector2 destroyerDestination2;
-                if(lineBonus.vertical)
-                {
-                    destroyerDestination1 = new Vector2(lineBonus.worldPos.x, -1.0f);
-                    destroyerDestination2 = new Vector2(lineBonus.worldPos.x, 8.0f);
-                }
-                else
-                {
-                    destroyerDestination1 = new Vector2(-1.0f, lineBonus.worldPos.y);
-                    destroyerDestination2 = new Vector2(8.0f, lineBonus.worldPos.y);
-                }
-                // Создание разрушителей
-                Destroyer destroyer1 = new Destroyer(lineBonus.worldPos);
-                Destroyer destroyer2 = new Destroyer(lineBonus.worldPos);
-                destroyerList.Add(destroyer1);
-                destroyerList.Add(destroyer2);
-                // Запуск анимации
-                MoveAnimation moveAnimation1 = new MoveAnimation(
-                    destroyer1,
-                    speed: 10.0,
-                    lineBonus.worldPos,
-                    destroyerDestination1,
-                    blocking: true,
-                    finishedCallback: _ => destroyerList.Remove(destroyer1)
-                );
-                MoveAnimation moveAnimation2 = new MoveAnimation(
-                    destroyer2,
-                    speed: 10.0,
-                    lineBonus.worldPos,
-                    destroyerDestination2,
-                    blocking: true,
-                    finishedCallback: _ => destroyerList.Remove(destroyer2)
-                );
-                activeAnimations.Add(moveAnimation1);
-                activeAnimations.Add(moveAnimation2);
-            }
+            lineBonuses.ForEach(lineBonus => TriggerLineBonus(lineBonus));
 
             // Запуск анимации исчезновения
             implodingObjects.Clear();
