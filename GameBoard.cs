@@ -383,8 +383,12 @@ namespace Match3
             {
                 Debug.WriteLine($"Creating line bonus in {objectSwap2.worldPos}");
                 bool vertical = combination[0].worldPos.x == combination[1].worldPos.x;
+                // Создаем объект
                 LineBonus newLineBonus = new LineBonus(objectSwap2, vertical, objectSwap2.worldPos, objectSwap2.worldPos);
                 objectList.Add(newLineBonus);
+                // Запускаем анимацию появления
+                ScaleAnimation spawnAnimation = new ScaleAnimation(newLineBonus, 0.0, 1.0, blocking: true);
+                activeAnimations.Add(spawnAnimation);
             }
 
             // Запуск анимации исчезновения
