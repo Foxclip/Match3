@@ -153,6 +153,52 @@ namespace Match3
         }
 
         /// <summary>
+        /// Обновляет состояние игрового поля.
+        /// </summary>
+        public void Update(GameTime gameTime)
+        {
+            // Пытаемся изменить состояние игры
+            ChangeState();
+
+            // Действие разрушителей
+            List<Destroyer> destroyerListCopy = new List<Destroyer>(destroyerList);
+            foreach(Destroyer destroyer in destroyerListCopy)
+            {
+                foreach(GameBoardObject gameBoardObject in objectList)
+                {
+                    Rectangle boundingBox = gameBoardObject.GetScreenBoundingBox();
+                    bool boundingBoxHit = boundingBox.Contains(GameBoardObject.WorldToScreen(destroyer.spriteWorldPos));
+                    bool alreadyImploding = implodingObjects.Contains(gameBoardObject);
+                    if(boundingBoxHit && !alreadyImploding)
+                    {
+                        implodingObjects.Add(gameBoardObject);
+                        ScaleAnimation implodeAnimation = new ScaleAnimation(gameBoardObject, 1.0, 0.0, blocking: true);
+                        activeAnimations.Add(implodeAnimation);
+                        score++;
+                        // Если это LineBonus
+                        if(gameBoardObject.GetType() == typeof(LineBonus))
+                        {
+                            TriggerLineBonus((LineBonus)gameBoardObject);
+                        }
+                    }
+                }
+            }
+
+            // Обновляем состояние анимаций
+            activeAnimations.ForEach(animation => animation.Update(gameTime));
+            // Удаляем завершившиеся анимации
+            List<Animation> animationsToDelete = activeAnimations.FindAll(animation => !animation.active);
+            animationsToDelete.ForEach(animation => animation.OnDelete());
+            activeAnimations = activeAnimations.Except(animationsToDelete).ToList();
+
+            // Уменьшаем остаток времени
+            if(currentGamePhase != GamePhase.MainMenu && currentGamePhase != GamePhase.GameOver)
+            {
+                timeRemaining -= gameTime.ElapsedGameTime.TotalSeconds;
+            }
+        }
+
+        /// <summary>
         /// Возвращает объект, находящийся в клетке игрового поля или null если там ничего нет.
         /// </summary>
         /// <param name="pos">Клетка игрового поля.</param>

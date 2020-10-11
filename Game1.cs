@@ -140,9 +140,6 @@ namespace Match3
         /// </summary>
         protected override void Update(GameTime gameTime)
         {
-            // Пытаемся изменить состояние игры
-            gameBoard.ChangeState();
-
             // Обработка клавиатуры
             keyboardState = Keyboard.GetState();
             if(GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Escape))
@@ -189,46 +186,12 @@ namespace Match3
                 }
             }
 
-            // Действие разрушителей
-            List<Destroyer> destroyerListCopy = new List<Destroyer>(gameBoard.destroyerList);
-            foreach(Destroyer destroyer in destroyerListCopy)
-            {
-                foreach(GameBoardObject gameBoardObject in gameBoard.objectList)
-                {
-                    Rectangle boundingBox = gameBoardObject.GetScreenBoundingBox();
-                    bool boundingBoxHit = boundingBox.Contains(GameBoardObject.WorldToScreen(destroyer.spriteWorldPos));
-                    bool alreadyImploding = gameBoard.implodingObjects.Contains(gameBoardObject);
-                    if(boundingBoxHit && !alreadyImploding)
-                    {
-                        gameBoard.implodingObjects.Add(gameBoardObject);
-                        ScaleAnimation implodeAnimation = new ScaleAnimation(gameBoardObject, 1.0, 0.0, blocking: true);
-                        gameBoard.activeAnimations.Add(implodeAnimation);
-                        gameBoard.score++;
-                        // Если это LineBonus
-                        if(gameBoardObject.GetType() == typeof(LineBonus))
-                        {
-                            gameBoard.TriggerLineBonus((LineBonus)gameBoardObject);
-                        }
-                    }
-                }
-            }
-
             // Сохраняем состояние клавиатуры и мыши
             previousKeyboardState = keyboardState;
             previousMouseState = mouseState;
 
-            // Обновляем состояние анимаций
-            gameBoard.activeAnimations.ForEach(animation => animation.Update(gameTime));
-            // Удаляем завершившиеся анимации
-            List<Animation> animationsToDelete = gameBoard.activeAnimations.FindAll(animation => !animation.active);
-            animationsToDelete.ForEach(animation => animation.OnDelete());
-            gameBoard.activeAnimations = gameBoard.activeAnimations.Except(animationsToDelete).ToList();
-
-            // Уменьшаем остаток времени
-            if(gameBoard.currentGamePhase != GamePhase.MainMenu && gameBoard.currentGamePhase != GamePhase.GameOver)
-            {
-                gameBoard.timeRemaining -= gameTime.ElapsedGameTime.TotalSeconds;
-            }
+            // Обновление состояния игрового поля
+            gameBoard.Update(gameTime);
 
             base.Update(gameTime);
         }
