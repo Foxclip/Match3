@@ -61,6 +61,10 @@ namespace Match3
             /// </summary>
             ElementSlide,
             /// <summary>
+            /// Бонус активирован.
+            /// </summary>
+            Bonus,
+            /// <summary>
             /// Игра завершена.
             /// </summary>
             GameOver,
@@ -437,6 +441,11 @@ namespace Match3
                 CreateNewObjects();
                 currentGamePhase = GamePhase.ComboDeletion;
             }
+            // Работа бонусов
+            else if(currentGamePhase == GamePhase.Bonus)
+            {
+                currentGamePhase = GamePhase.ComboDeletion;
+            }
         }
 
         /// <summary>
@@ -556,6 +565,7 @@ namespace Match3
         /// </summary>
         public void TriggerBombBonus(BombBonus bombBonus)
         {
+            // Объекты вокруг бомбы
             for(int x = bombBonus.worldPos.x - 1; x <= bombBonus.worldPos.x + 1; x++)
             {
                 for(int y = bombBonus.worldPos.y - 1; y <= bombBonus.worldPos.y + 1; y++)
@@ -592,6 +602,18 @@ namespace Match3
                     }
                 }
             }
+            // Сама бомба
+            implodingObjects.Add(bombBonus);
+            ScaleAnimation bombImplodeAnimation = new ScaleAnimation(
+                bombBonus,
+                beginScale: 1.0,
+                endScale: 0.0,
+                delay: 0.0,
+                blocking: true,
+                finishedCallback: _ => objectList.Remove(bombBonus)
+            );
+            activeAnimations.Add(bombImplodeAnimation);
+            score++;
         }
 
         /// <summary>
@@ -619,9 +641,23 @@ namespace Match3
 
             // Срабатывание бонусов
             List<LineBonus> lineBonuses = objectsToDelete.FindAll(obj => obj.GetType() == typeof(LineBonus)).Cast<LineBonus>().ToList();
-            lineBonuses.ForEach(lineBonus => TriggerLineBonus(lineBonus));
+            foreach(LineBonus lineBonus in lineBonuses)
+            {
+                TriggerLineBonus(lineBonus);
+                currentGamePhase = GamePhase.Bonus;
+            }
             List<BombBonus> bombBonuses = objectsToDelete.FindAll(obj => obj.GetType() == typeof(BombBonus)).Cast<BombBonus>().ToList();
-            bombBonuses.ForEach(bombBonus => TriggerBombBonus(bombBonus));
+            foreach(BombBonus bombBonus in bombBonuses)
+            {
+                TriggerBombBonus(bombBonus);
+                currentGamePhase = GamePhase.Bonus;
+            }
+
+            // Если бонусы активны, то новые создавать нельзя.
+            if(currentGamePhase == GamePhase.Bonus)
+            {
+                return;
+            }
 
             // Запуск анимации исчезновения
             implodingObjects.Clear();
