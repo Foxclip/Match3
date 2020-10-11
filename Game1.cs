@@ -24,6 +24,7 @@ namespace Match3
         public static Texture2D diamondSprite;
         public static Texture2D lineBonusSprite;
         public static Texture2D destroyerSprite;
+        public static Texture2D bombSprite;
 
         // Размер клетки игрового поля в пикселях
         public readonly static float cellSize = 75f;
@@ -98,6 +99,7 @@ namespace Match3
             diamondSprite = Content.Load<Texture2D>("diamond");
             lineBonusSprite = Content.Load<Texture2D>("line_bonus");
             destroyerSprite = Content.Load<Texture2D>("destroyer");
+            bombSprite = Content.Load<Texture2D>("bomb");
 
             // Спрайт кнопки Play
             Texture2D playButtonSprite = Content.Load<Texture2D>("play_button");

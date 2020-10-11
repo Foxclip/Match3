@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using ComboList = System.Collections.Generic.List<System.Collections.Generic.List<Match3.GameBoardObject>>;
+using CrossList = System.Collections.Generic.List<(System.Collections.Generic.List<Match3.GameBoardObject>, System.Collections.Generic.List<Match3.GameBoardObject>)>;
 
 
 namespace Match3
@@ -479,6 +480,20 @@ namespace Match3
         }
 
         /// <summary>
+        /// Создать бонус Bomb.
+        /// </summary>
+        /// <param name="baseObject">Базовый объект.</param>
+        public void CreateBombBonus(GameBoardObject baseObject)
+        {
+            // Создаем объект
+            BombBonus newBombBonus = new BombBonus(baseObject, baseObject.worldPos, baseObject.worldPos);
+            objectList.Add(newBombBonus);
+            // Запускаем анимацию появления
+            ScaleAnimation spawnAnimation = new ScaleAnimation(newBombBonus, 0.0, 1.0, blocking: true);
+            activeAnimations.Add(spawnAnimation);
+        }
+
+        /// <summary>
         /// Удаление комбинаций.
         /// </summary>
         public void DeleteCombos(ComboList comboList)
@@ -496,6 +511,33 @@ namespace Match3
                 // Запускаем анимацию появления
                 ScaleAnimation spawnAnimation = new ScaleAnimation(newLineBonus, 0.0, 1.0, blocking: true);
                 activeAnimations.Add(spawnAnimation);
+            }
+
+            // Бонус Bomb
+            // Комбинации из 5 и более
+            ComboList combinationsOf5AndMore = comboList.FindAll(combination => combination.Count >= 5);
+            combination = combinationsOf5AndMore.Find(combination => combination.Contains(objectSwap2));
+            if(combination != null)
+            {
+                Debug.WriteLine($"Creating bomb bonus in {objectSwap2.worldPos}");
+                // Создаем объект
+                CreateBombBonus(objectSwap2);
+            }
+            // Перекрестные комбинации из 3 и более
+            CrossList crosses = new CrossList();
+            ComboList verticalCombinations = comboList.FindAll(combination => combination[0].worldPos.x == combination[1].worldPos.x);
+            ComboList horizontalCombinations = comboList.FindAll(combination => combination[0].worldPos.y == combination[1].worldPos.y);
+            foreach(List<GameBoardObject> verticalCombination in verticalCombinations)
+            {
+                foreach(List<GameBoardObject> horizontalCombination in horizontalCombinations)
+                {
+                    List<GameBoardObject> intersection = verticalCombination.Intersect(horizontalCombination).ToList();
+                    if(intersection.Count > 0)
+                    {
+                        GameBoardObject objectAtIntersection = intersection[0];
+                        CreateBombBonus(objectAtIntersection);
+                    }
+                }
             }
 
             // Список удаляемых объектов
