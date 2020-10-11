@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using Vector2 = Microsoft.Xna.Framework.Vector2;
 
@@ -21,18 +22,23 @@ namespace Match3
         /// Масштаб в конце анимации.
         /// </summary>
         readonly double endScale;
+        /// <summary>
+        /// Действие, выполняющееся после завершения анимации.
+        /// </summary>
+        private Action<GenericObject> finishedCallback;
 
         /// <summary>
         /// Конструктор.
         /// </summary>
         /// <param name="linkedObject">Привязанный обеъект на игровом поле.</param>
         /// <param name="blocking">Блокирует ли анимация переход в следующее состояние игры.</param>
-        public ScaleAnimation(GameBoardObject linkedObject, double beginScale, double endScale, bool blocking = false)
+        public ScaleAnimation(GameBoardObject linkedObject, double beginScale, double endScale, bool blocking = false, Action<GenericObject> finishedCallback = null)
         {
             this.linkedObject = linkedObject;
             this.beginScale = beginScale;
             this.endScale = endScale;
             this.blocking = blocking;
+            this.finishedCallback = finishedCallback;
             duration = 0.3;
             timePassed = 0.0;
             active = true;
@@ -50,6 +56,7 @@ namespace Match3
                 {
                     timePassed = duration;
                     active = false;
+                    finishedCallback?.Invoke(linkedObject);
                 }
                 double completionPercentage = timePassed / duration;
                 double nonlinear = Math.Pow(completionPercentage, power);

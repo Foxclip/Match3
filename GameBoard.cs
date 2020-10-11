@@ -122,15 +122,15 @@ namespace Match3
             }
 
             ////////////////////////////////////
-            GameBoardObject gameBoardObject = GetObjectAtPosition(3, 3);
-            objectList.Remove(gameBoardObject);
-            LineBonus lineBonus = new LineBonus(gameBoardObject, true, gameBoardObject.worldPos, gameBoardObject.worldPos);
-            objectList.Add(lineBonus);
+            //GameBoardObject gameBoardObject = GetObjectAtPosition(3, 3);
+            //objectList.Remove(gameBoardObject);
+            //LineBonus lineBonus = new LineBonus(gameBoardObject, true, gameBoardObject.worldPos, gameBoardObject.worldPos);
+            //objectList.Add(lineBonus);
 
-            GameBoardObject gameBoardObject2 = GetObjectAtPosition(3, 6);
-            objectList.Remove(gameBoardObject2);
-            LineBonus lineBonus2 = new LineBonus(gameBoardObject2, false, gameBoardObject2.worldPos, gameBoardObject2.worldPos);
-            objectList.Add(lineBonus2);
+            //GameBoardObject gameBoardObject2 = GetObjectAtPosition(3, 6);
+            //objectList.Remove(gameBoardObject2);
+            //LineBonus lineBonus2 = new LineBonus(gameBoardObject2, false, gameBoardObject2.worldPos, gameBoardObject2.worldPos);
+            //objectList.Add(lineBonus2);
 
         }
 
@@ -173,13 +173,24 @@ namespace Match3
                     if(boundingBoxHit && !alreadyImploding)
                     {
                         implodingObjects.Add(gameBoardObject);
-                        ScaleAnimation implodeAnimation = new ScaleAnimation(gameBoardObject, 1.0, 0.0, blocking: true);
+                        ScaleAnimation implodeAnimation = new ScaleAnimation(
+                            gameBoardObject,
+                            1.0,
+                            0.0,
+                            blocking: true,
+                            finishedCallback: _ => objectList.Remove(gameBoardObject)
+                        );
                         activeAnimations.Add(implodeAnimation);
                         score++;
                         // Если это LineBonus
                         if(gameBoardObject.GetType() == typeof(LineBonus))
                         {
                             TriggerLineBonus((LineBonus)gameBoardObject);
+                        }
+                        // Если это BombBonus
+                        if(gameBoardObject.GetType() == typeof(BombBonus))
+                        {
+                            TriggerBombBonus((BombBonus)gameBoardObject);
                         }
                     }
                 }
@@ -191,6 +202,9 @@ namespace Match3
             List<Animation> animationsToDelete = activeAnimations.FindAll(animation => !animation.active);
             animationsToDelete.ForEach(animation => animation.OnDelete());
             activeAnimations = activeAnimations.Except(animationsToDelete).ToList();
+
+            // Синхронизируем список implodingObjects с основным списком
+            implodingObjects = implodingObjects.Intersect(objectList).ToList();
 
             // Уменьшаем остаток времени
             if(currentGamePhase != GamePhase.MainMenu && currentGamePhase != GamePhase.GameOver)
@@ -205,7 +219,7 @@ namespace Match3
         /// <param name="pos">Клетка игрового поля.</param>
         public GameBoardObject GetObjectAtPosition(Vector2Int pos)
         {
-            List<GameBoardObject> foundObjects = objectList.FindAll(obj => obj.worldPos == pos);
+            List<GameBoardObject> foundObjects = objectList.FindAll(obj => obj.worldPos == pos && !implodingObjects.Contains(obj));
             if(foundObjects.Count > 1)
             {
                 throw new InvalidOperationException($"В клетке {pos} найдено объектов: {foundObjects.Count}");
@@ -358,10 +372,6 @@ namespace Match3
             // Создание новых элементов
             else if(currentGamePhase == GamePhase.ElementSlide)
             {
-                // Удаление комбинаций с игрового поля
-                objectList = objectList.Except(implodingObjects).ToList();
-                implodingObjects.Clear();
-
                 CreateNewObjects();
                 currentGamePhase = GamePhase.ComboDeletion;
             }
@@ -480,6 +490,52 @@ namespace Match3
         }
 
         /// <summary>
+        /// Активирует бонус Bomb.
+        /// </summary>
+        public void TriggerBombBonus(BombBonus bombBonus)
+        {
+            for(int x = bombBonus.worldPos.x - 1; x <= bombBonus.worldPos.x + 1; x++)
+            {
+                for(int y = bombBonus.worldPos.y - 1; y <= bombBonus.worldPos.y + 1; y++)
+                {
+                    if(x == bombBonus.worldPos.x && y == bombBonus.worldPos.y)
+                    {
+                        continue;
+                    }
+                    GameBoardObject obj = GetObjectAtPosition(x, y);
+                    if(obj is null)
+                    {
+                        continue;
+                    }
+                    bool alreadyImploding = implodingObjects.Contains(obj);
+                    if(!alreadyImploding)
+                    {
+                        implodingObjects.Add(obj);
+                        ScaleAnimation implodeAnimation = new ScaleAnimation(
+                            obj,
+                            1.0,
+                            0.0,
+                            blocking: true,
+                            finishedCallback: _ => objectList.Remove(obj)
+                        );
+                        activeAnimations.Add(implodeAnimation);
+                        score++;
+                        // Если это LineBonus
+                        if(obj.GetType() == typeof(LineBonus))
+                        {
+                            TriggerLineBonus((LineBonus)obj);
+                        }
+                        // Если это BombBonus
+                        if(obj.GetType() == typeof(BombBonus))
+                        {
+                            TriggerBombBonus((BombBonus)obj);
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Создать бонус Bomb.
         /// </summary>
         /// <param name="baseObject">Базовый объект.</param>
@@ -519,8 +575,6 @@ namespace Match3
             combination = combinationsOf5AndMore.Find(combination => combination.Contains(objectSwap2));
             if(combination != null)
             {
-                Debug.WriteLine($"Creating bomb bonus in {objectSwap2.worldPos}");
-                // Создаем объект
                 CreateBombBonus(objectSwap2);
             }
             // Перекрестные комбинации из 3 и более
@@ -547,13 +601,15 @@ namespace Match3
             // Срабатывание бонусов
             List<LineBonus> lineBonuses = objectsToDelete.FindAll(obj => obj.GetType() == typeof(LineBonus)).Cast<LineBonus>().ToList();
             lineBonuses.ForEach(lineBonus => TriggerLineBonus(lineBonus));
+            List<BombBonus> bombBonuses = objectsToDelete.FindAll(obj => obj.GetType() == typeof(BombBonus)).Cast<BombBonus>().ToList();
+            bombBonuses.ForEach(bombBonus => TriggerBombBonus(bombBonus));
 
             // Запуск анимации исчезновения
             implodingObjects.Clear();
             foreach(GameBoardObject obj in objectsToDelete)
             {
                 implodingObjects.Add(obj);
-                ScaleAnimation implodeAnimation = new ScaleAnimation(obj, 1.0, 0.0, blocking: true);
+                ScaleAnimation implodeAnimation = new ScaleAnimation(obj,1.0, 0.0, blocking: true, finishedCallback: _ => objectList.Remove(obj));
                 activeAnimations.Add(implodeAnimation);
             }
         }
