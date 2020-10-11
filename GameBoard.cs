@@ -177,6 +177,7 @@ namespace Match3
                             gameBoardObject,
                             beginScale: 1.0,
                             endScale: 0.0,
+                            delay: 0.1,
                             blocking: true,
                             finishedCallback: _ => objectList.Remove(gameBoardObject)
                         );
