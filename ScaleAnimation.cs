@@ -32,15 +32,16 @@ namespace Match3
         /// </summary>
         /// <param name="linkedObject">Привязанный обеъект на игровом поле.</param>
         /// <param name="blocking">Блокирует ли анимация переход в следующее состояние игры.</param>
-        public ScaleAnimation(GameBoardObject linkedObject, double beginScale, double endScale, bool blocking = false, Action<GenericObject> finishedCallback = null)
+        public ScaleAnimation(GameBoardObject linkedObject, double beginScale, double endScale, double delay = 0.0, bool blocking = false, Action<GenericObject> finishedCallback = null)
         {
             this.linkedObject = linkedObject;
             this.beginScale = beginScale;
             this.endScale = endScale;
             this.blocking = blocking;
             this.finishedCallback = finishedCallback;
+            this.delay = delay;
             duration = 0.3;
-            timePassed = 0.0;
+            timePassed = -delay;
             active = true;
         }
 
@@ -52,6 +53,10 @@ namespace Match3
             if(active)
             {
                 timePassed += gameTime.ElapsedGameTime.TotalSeconds;
+                if(timePassed < 0)
+                {
+                    return;
+                }
                 if(timePassed > duration)
                 {
                     timePassed = duration;

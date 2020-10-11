@@ -175,8 +175,8 @@ namespace Match3
                         implodingObjects.Add(gameBoardObject);
                         ScaleAnimation implodeAnimation = new ScaleAnimation(
                             gameBoardObject,
-                            1.0,
-                            0.0,
+                            beginScale: 1.0,
+                            endScale: 0.0,
                             blocking: true,
                             finishedCallback: _ => objectList.Remove(gameBoardObject)
                         );
@@ -513,8 +513,9 @@ namespace Match3
                         implodingObjects.Add(obj);
                         ScaleAnimation implodeAnimation = new ScaleAnimation(
                             obj,
-                            1.0,
-                            0.0,
+                            beginScale: 1.0, 
+                            endScale: 0.0,
+                            delay: 0.25,
                             blocking: true,
                             finishedCallback: _ => objectList.Remove(obj)
                         );

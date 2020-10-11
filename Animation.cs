@@ -17,6 +17,10 @@ namespace Match3
         /// </summary>
         protected double duration = 1.0;
         /// <summary>
+        /// Задержка в начале анимации.
+        /// </summary>
+        protected double delay = 0.0;
+        /// <summary>
         /// Время в миллисекундах, прошедшее с начала анимации
         /// </summary>
         protected double timePassed = 0.0;
