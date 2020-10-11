@@ -189,6 +189,24 @@ namespace Match3
                 }
             }
 
+            // Действие разрушителей
+            foreach(Destroyer destroyer in gameBoard.destroyerList)
+            {
+                foreach(GameBoardObject gameBoardObject in gameBoard.objectList)
+                {
+                    Rectangle boundingBox = gameBoardObject.GetScreenBoundingBox();
+                    bool boundingBoxHit = boundingBox.Contains(GameBoardObject.WorldToScreen(destroyer.spriteWorldPos));
+                    bool alreadyImploding = gameBoard.implodingObjects.Contains(gameBoardObject);
+                    if(boundingBoxHit && !alreadyImploding)
+                    {
+                        gameBoard.implodingObjects.Add(gameBoardObject);
+                        ScaleAnimation implodeAnimation = new ScaleAnimation(gameBoardObject, 1.0, 0.0, blocking: true);
+                        gameBoard.activeAnimations.Add(implodeAnimation);
+                        gameBoard.score++;
+                    }
+                }
+            }
+
             // Сохраняем состояние клавиатуры и мыши
             previousKeyboardState = keyboardState;
             previousMouseState = mouseState;

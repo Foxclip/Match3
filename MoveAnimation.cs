@@ -21,6 +21,10 @@ namespace Match3
         /// Позиция объекта в конце анимации
         /// </summary>
         private Vector2 endPos;
+        /// <summary>
+        /// Действие, выполняющееся после завершения анимации.
+        /// </summary>
+        private Action<GenericObject> finishedCallback;
 
         /// <summary>
         /// Конструктор анимации с таймером.
@@ -30,13 +34,14 @@ namespace Match3
         /// <param name="endPos">Позиция в конце анимации.</param>
         /// <param name="duration">Длительность анимации.</param>
         /// <param name="blocking">Блокирует ли анимация переход в следующее состояние игры.</param>
-        public MoveAnimation(GenericObject linkedObject, Vector2 beginPos, Vector2 endPos, double duration, bool blocking = false)
+        public MoveAnimation(GenericObject linkedObject, Vector2 beginPos, Vector2 endPos, double duration, bool blocking = false, Action<GenericObject> finishedCallback = null)
         {
             this.linkedObject = linkedObject;
             this.beginPos = beginPos;
             this.endPos = endPos;
             this.blocking = blocking;
             this.duration = duration;
+            this.finishedCallback = finishedCallback;
             timePassed = 0.0;
             active = true;
         }
@@ -49,12 +54,13 @@ namespace Match3
         /// <param name="beginPos">Позиция в начале анимации.</param>
         /// <param name="endPos">Позиция в конце анимации.</param>
         /// <param name="blocking">Блокирует ли анимация переход в следующее состояние игры.</param>
-        public MoveAnimation(GenericObject linkedObject, double speed, Vector2 beginPos, Vector2 endPos, bool blocking = false)
+        public MoveAnimation(GenericObject linkedObject, double speed, Vector2 beginPos, Vector2 endPos, bool blocking = false, Action<GenericObject> finishedCallback = null)
         {
             this.linkedObject = linkedObject;
             this.beginPos = beginPos;
             this.endPos = endPos;
             this.blocking = blocking;
+            this.finishedCallback = finishedCallback;
             duration = Vector2.Distance(beginPos, endPos) / speed;
             timePassed = 0.0;
             active = true;
@@ -72,6 +78,7 @@ namespace Match3
                 {
                     timePassed = duration;
                     active = false;
+                    finishedCallback?.Invoke(linkedObject);
                 }
                 double completionPercentage = timePassed / duration;
                 double nonlinear = Math.Pow(completionPercentage, power);

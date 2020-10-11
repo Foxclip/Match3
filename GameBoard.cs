@@ -423,8 +423,22 @@ namespace Match3
                 destroyerList.Add(destroyer1);
                 destroyerList.Add(destroyer2);
                 // Запуск анимации
-                MoveAnimation moveAnimation1 = new MoveAnimation(destroyer1, speed: 10.0, lineBonus.worldPos, destroyerDestination1, blocking: true);
-                MoveAnimation moveAnimation2 = new MoveAnimation(destroyer2, speed: 10.0, lineBonus.worldPos, destroyerDestination2, blocking: true);
+                MoveAnimation moveAnimation1 = new MoveAnimation(
+                    destroyer1,
+                    speed: 10.0,
+                    lineBonus.worldPos,
+                    destroyerDestination1,
+                    blocking: true,
+                    finishedCallback: _ => destroyerList.Remove(destroyer1)
+                );
+                MoveAnimation moveAnimation2 = new MoveAnimation(
+                    destroyer2,
+                    speed: 10.0,
+                    lineBonus.worldPos,
+                    destroyerDestination2,
+                    blocking: true,
+                    finishedCallback: _ => destroyerList.Remove(destroyer2)
+                );
                 activeAnimations.Add(moveAnimation1);
                 activeAnimations.Add(moveAnimation2);
             }
