@@ -132,6 +132,28 @@ namespace Match3
             //LineBonus lineBonus2 = new LineBonus(gameBoardObject2, false, gameBoardObject2.worldPos, gameBoardObject2.worldPos);
             //objectList.Add(lineBonus2);
 
+            // Удаление комбинаций образовавшихся после случайной генерации объектов
+            ComboList comboList = GetComboList();
+            while(comboList.Count > 0)
+            {
+                GameBoardObject newObject = null;
+                foreach(List<GameBoardObject> combination in comboList)
+                {
+                    GameBoardObject middleObject = combination[combination.Count / 2];
+                    switch(combination[0].GetType().Name)
+                    {
+                        case nameof(SquareObject):   newObject = new CircleObject(middleObject.worldPos, middleObject.worldPos);   break;
+                        case nameof(CircleObject):   newObject = new TriangleObject(middleObject.worldPos, middleObject.worldPos); break;
+                        case nameof(TriangleObject): newObject = new HexagonObject(middleObject.worldPos, middleObject.worldPos);  break;
+                        case nameof(HexagonObject):  newObject = new DiamondObject(middleObject.worldPos, middleObject.worldPos);  break;
+                        case nameof(DiamondObject):  newObject = new SquareObject(middleObject.worldPos, middleObject.worldPos);   break;
+                    }
+                    objectList.Remove(middleObject);
+                    objectList.Add(newObject);
+                }
+                comboList = GetComboList();
+            }
+
         }
 
         /// <summary>
