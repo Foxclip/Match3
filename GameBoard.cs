@@ -335,16 +335,16 @@ namespace Match3
             for(int i = 0; i < 8; i++)
             {
                 tempComboList.Clear();
-                Type comboType = null;
+                GameBoardObject.GameBoardObjectType comboType = GameBoardObject.GameBoardObjectType.None;
                 for(int j = 0; j < 8; j++)
                 {
                     GameBoardObject obj = vertical ? GetObjectAtPosition(i, j) : GetObjectAtPosition(j, i);
                     if(obj is null)
                     {
-                        comboType = null;
+                        comboType = GameBoardObject.GameBoardObjectType.None;
                         continue;
                     }
-                    if(obj.GetType() == comboType)
+                    if(obj.objectType == comboType)
                     {
                         tempComboList.Add(obj);
                     }
@@ -357,7 +357,7 @@ namespace Match3
                         }
                         tempComboList.Clear();
                         tempComboList.Add(obj);
-                        comboType = obj.GetType();
+                        comboType = obj.objectType;
                     }
                 }
                 if(tempComboList.Count >= 3)

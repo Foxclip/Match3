@@ -14,6 +14,20 @@ namespace Match3
     /// </summary>
     public class GameBoardObject : IBoundingBox, IDrawable
     {
+        public enum GameBoardObjectType
+        {
+            None,
+            Square,
+            Circle,
+            Triangle,
+            Hexagon,
+            Diamond
+        }
+        /// <summary>
+        /// Тип объекта.
+        /// </summary>
+        public GameBoardObjectType objectType;
+
         /// <summary>
         /// Позиция объекта на игровом поле.
         /// </summary>
@@ -106,6 +120,7 @@ namespace Match3
         {
             sprite = Game1.squareSprite;
             spriteScale = 0.8f;
+            objectType = GameBoardObjectType.Square;
         }
     }
 
@@ -118,6 +133,7 @@ namespace Match3
         {
             sprite = Game1.circleSprite;
             spriteScale = 0.9f;
+            objectType = GameBoardObjectType.Circle;
         }
     }
 
@@ -130,6 +146,7 @@ namespace Match3
         {
             sprite = Game1.triangleSprite;
             spriteScale = 0.8f;
+            objectType = GameBoardObjectType.Triangle;
         }
     }
 
@@ -142,6 +159,7 @@ namespace Match3
         {
             sprite = Game1.hexagonSprite;
             spriteScale = 0.9f;
+            objectType = GameBoardObjectType.Hexagon;
         }
     }
 
@@ -154,6 +172,7 @@ namespace Match3
         {
             sprite = Game1.diamondSprite;
             spriteScale = 0.9f;
+            objectType = GameBoardObjectType.Diamond;
         }
     }
 }

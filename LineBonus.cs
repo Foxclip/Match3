@@ -30,6 +30,7 @@ namespace Match3
         {
             sprite = baseObject.sprite;
             spriteScale = baseObject.spriteScale;
+            objectType = baseObject.objectType;
             this.vertical = vertical;
             lineSprite = Game1.lineBonusSprite;
         }
@@ -48,7 +49,7 @@ namespace Match3
             Vector2 lineBonusOffset = new Vector2(lineSprite.Width / 2, lineSprite.Height / 2);
             // Отрисовка метки бонуса
             float rotation = vertical ? (float)Math.PI / 2 : 0f;
-            spriteBatch.Draw(lineSprite, spriteScreenPos, null, Color.White, rotation, lineBonusOffset, 1.0f, SpriteEffects.None, 0f);
+            spriteBatch.Draw(lineSprite, spriteScreenPos, null, Color.White, rotation, lineBonusOffset, spriteAnimatedScale, SpriteEffects.None, 0f);
         }
     }
 }
