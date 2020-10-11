@@ -32,7 +32,7 @@ namespace Match3
         /// <summary>
         /// Масштабирование спрайта.
         /// </summary>
-        public float spriteScale;
+        public float spriteScale = 1.0f;
 
         /// <summary>
         /// Множитель мвсштаба управляемый анимацией.
@@ -69,7 +69,7 @@ namespace Match3
         /// <summary>
         /// Рисует объект на экране.
         /// </summary>
-        public void Draw(SpriteBatch spriteBatch)
+        public virtual void Draw(SpriteBatch spriteBatch)
         {
             // Позиция спрайта на экране
             Vector2 spriteScreenPos = WorldToScreen(spriteWorldPos);

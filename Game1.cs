@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using static Match3.GameBoard;
-using ComboList = System.Collections.Generic.List<System.Collections.Generic.List<Match3.GameBoardObject>>;
 
 namespace Match3
 {
@@ -23,6 +22,7 @@ namespace Match3
         public static Texture2D triangleSprite;
         public static Texture2D hexagonSprite;
         public static Texture2D diamondSprite;
+        public static Texture2D lineBonusSprite;
 
         // Размер клетки игрового поля в пикселях
         public readonly static float cellSize = 75f;
@@ -40,9 +40,8 @@ namespace Match3
         private MouseState mouseState;
         private MouseState previousMouseState;
 
-        // Кнопка PLay
+        // Кнопки
         private Button playButton;
-        // Кнопка Ok
         private Button okButton;
 
         // Текстура верхней панели
@@ -66,6 +65,9 @@ namespace Match3
             IsMouseVisible = true;
         }
 
+        /// <summary>
+        /// Инициализация перед началом игры.
+        /// </summary>
         protected override void Initialize()
         {
             // Установка размера окна
@@ -80,6 +82,9 @@ namespace Match3
             base.Initialize();
         }
 
+        /// <summary>
+        /// Загрузка ресурсов.
+        /// </summary>
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
@@ -90,6 +95,7 @@ namespace Match3
             triangleSprite = Content.Load<Texture2D>("triangle");
             hexagonSprite = Content.Load<Texture2D>("hexagon");
             diamondSprite = Content.Load<Texture2D>("diamond");
+            lineBonusSprite = Content.Load<Texture2D>("line_bonus");
 
             // Спрайт кнопки Play
             Texture2D playButtonSprite = Content.Load<Texture2D>("play_button");
