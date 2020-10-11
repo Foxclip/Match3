@@ -143,25 +143,51 @@ namespace Match3
                 comboList = GetComboList();
             }
 
-            //////////////////////////////////
-            //SetObjectAtPosition(new Vector2Int(3, 2), new SquareObject(new Vector2Int(3, 2), new Vector2Int(3, 2)));
-            //SetObjectAtPosition(new Vector2Int(3, 4), new SquareObject(new Vector2Int(3, 4), new Vector2Int(3, 4)));
-            //SetObjectAtPosition(new Vector2Int(3, 3), new SquareObject(new Vector2Int(3, 3), new Vector2Int(3, 3)));
-            //SetObjectAtPosition(new Vector2Int(4, 3), new SquareObject(new Vector2Int(4, 3), new Vector2Int(4, 3)));
-            //SetObjectAtPosition(new Vector2Int(5, 3), new SquareObject(new Vector2Int(5, 3), new Vector2Int(5, 3)));
-            //SetObjectAtPosition(new Vector2Int(6, 3), new SquareObject(new Vector2Int(6, 3), new Vector2Int(6, 3)));
-            //SetObjectAtPosition(new Vector2Int(7, 3), new SquareObject(new Vector2Int(7, 3), new Vector2Int(7, 3)));
+            TurnIntoSquare(new Vector2Int(5, 2));
+            TurnIntoBomb(new Vector2Int(5, 2));
+            TurnIntoSquare(new Vector2Int(4, 2));
+
+            TurnIntoSquare(new Vector2Int(2, 3));
+            TurnIntoSquare(new Vector2Int(3, 3));
+            TurnIntoSquare(new Vector2Int(4, 3));
+            TurnIntoSquare(new Vector2Int(6, 3));
+
+            TurnIntoSquare(new Vector2Int(4, 4));
+            TurnIntoSquare(new Vector2Int(5, 4));
 
         }
 
         /// <summary>
-        /// Устанавливает объект в определенной позиции.
-        /// </summary>>
-        public void SetObjectAtPosition(Vector2Int position, GameBoardObject newObject)
+        /// Превращает объект в заданной позиции в квадрат.
+        /// </summary>
+        public void TurnIntoSquare(Vector2Int pos)
         {
-            GameBoardObject oldObject = GetObjectAtPosition(position);
-            objectList.Remove(oldObject);
-            objectList.Add(newObject);
+            GameBoardObject obj = GetObjectAtPosition(pos);
+            SquareObject squareObject = new SquareObject(obj.worldPos, obj.worldPos);
+            objectList.Remove(obj);
+            objectList.Add(squareObject);
+        }
+
+        /// <summary>
+        /// Превращает объект в заданной позиции в круг.
+        /// </summary>
+        public void TurnIntoCircle(Vector2Int pos)
+        {
+            GameBoardObject obj = GetObjectAtPosition(pos);
+            CircleObject circleObject = new CircleObject(obj.worldPos, obj.worldPos);
+            objectList.Remove(obj);
+            objectList.Add(circleObject);
+        }
+
+        /// <summary>
+        /// Превращает объект в заданной позиции в бомбу.
+        /// </summary>
+        public void TurnIntoBomb(Vector2Int pos)
+        {
+            GameBoardObject obj = GetObjectAtPosition(pos);
+            BombBonus bomb = new BombBonus(obj, obj.worldPos, obj.worldPos);
+            objectList.Remove(obj);
+            objectList.Add(bomb);
         }
 
         /// <summary>
@@ -543,30 +569,26 @@ namespace Match3
                     {
                         continue;
                     }
-                    bool alreadyImploding = implodingObjects.Contains(obj);
-                    if(!alreadyImploding)
+                    implodingObjects.Add(obj);
+                    ScaleAnimation implodeAnimation = new ScaleAnimation(
+                        obj,
+                        beginScale: 1.0, 
+                        endScale: 0.0,
+                        delay: 0.25,
+                        blocking: true,
+                        finishedCallback: _ => objectList.Remove(obj)
+                    );
+                    activeAnimations.Add(implodeAnimation);
+                    score++;
+                    // Если это LineBonus
+                    if(obj.GetType() == typeof(LineBonus))
                     {
-                        implodingObjects.Add(obj);
-                        ScaleAnimation implodeAnimation = new ScaleAnimation(
-                            obj,
-                            beginScale: 1.0, 
-                            endScale: 0.0,
-                            delay: 0.25,
-                            blocking: true,
-                            finishedCallback: _ => objectList.Remove(obj)
-                        );
-                        activeAnimations.Add(implodeAnimation);
-                        score++;
-                        // Если это LineBonus
-                        if(obj.GetType() == typeof(LineBonus))
-                        {
-                            TriggerLineBonus((LineBonus)obj);
-                        }
-                        // Если это BombBonus
-                        if(obj.GetType() == typeof(BombBonus))
-                        {
-                            TriggerBombBonus((BombBonus)obj);
-                        }
+                        TriggerLineBonus((LineBonus)obj);
+                    }
+                    // Если это BombBonus
+                    if(obj.GetType() == typeof(BombBonus))
+                    {
+                        TriggerBombBonus((BombBonus)obj);
                     }
                 }
             }
@@ -591,6 +613,25 @@ namespace Match3
         /// </summary>
         public void DeleteCombos(ComboList comboList)
         {
+            // Список удаляемых объектов
+            List<GameBoardObject> objectsToDelete = comboList.SelectMany(tempList => tempList).ToList();
+            score += objectsToDelete.Count;
+
+            // Срабатывание бонусов
+            List<LineBonus> lineBonuses = objectsToDelete.FindAll(obj => obj.GetType() == typeof(LineBonus)).Cast<LineBonus>().ToList();
+            lineBonuses.ForEach(lineBonus => TriggerLineBonus(lineBonus));
+            List<BombBonus> bombBonuses = objectsToDelete.FindAll(obj => obj.GetType() == typeof(BombBonus)).Cast<BombBonus>().ToList();
+            bombBonuses.ForEach(bombBonus => TriggerBombBonus(bombBonus));
+
+            // Запуск анимации исчезновения
+            implodingObjects.Clear();
+            foreach(GameBoardObject obj in objectsToDelete)
+            {
+                implodingObjects.Add(obj);
+                ScaleAnimation implodeAnimation = new ScaleAnimation(obj,1.0, 0.0, blocking: true, finishedCallback: _ => objectList.Remove(obj));
+                activeAnimations.Add(implodeAnimation);
+            }
+
             // Бонус Bomb
             // Комбинации из 5 и более
             List<Vector2Int> newBombPositions = new List<Vector2Int>();
@@ -634,25 +675,6 @@ namespace Match3
                 // Запускаем анимацию появления
                 ScaleAnimation spawnAnimation = new ScaleAnimation(newLineBonus, 0.0, 1.0, blocking: true);
                 activeAnimations.Add(spawnAnimation);
-            }
-
-            // Список удаляемых объектов
-            List<GameBoardObject> objectsToDelete = comboList.SelectMany(tempList => tempList).ToList();
-            score += objectsToDelete.Count;
-
-            // Срабатывание бонусов
-            List<LineBonus> lineBonuses = objectsToDelete.FindAll(obj => obj.GetType() == typeof(LineBonus)).Cast<LineBonus>().ToList();
-            lineBonuses.ForEach(lineBonus => TriggerLineBonus(lineBonus));
-            List<BombBonus> bombBonuses = objectsToDelete.FindAll(obj => obj.GetType() == typeof(BombBonus)).Cast<BombBonus>().ToList();
-            bombBonuses.ForEach(bombBonus => TriggerBombBonus(bombBonus));
-
-            // Запуск анимации исчезновения
-            implodingObjects.Clear();
-            foreach(GameBoardObject obj in objectsToDelete)
-            {
-                implodingObjects.Add(obj);
-                ScaleAnimation implodeAnimation = new ScaleAnimation(obj,1.0, 0.0, blocking: true, finishedCallback: _ => objectList.Remove(obj));
-                activeAnimations.Add(implodeAnimation);
             }
         }
 
