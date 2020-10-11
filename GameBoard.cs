@@ -127,9 +127,12 @@ namespace Match3
 
             // Удаление комбинаций образовавшихся после случайной генерации объектов
             ComboList comboList = GetComboList();
+            int iteration = 1;
             while(comboList.Count > 0)
             {
+                Debug.WriteLine($"Iteration: {iteration}");
                 GameBoardObject newObject = null;
+                int objectsChanged = 0;
                 foreach(List<GameBoardObject> combination in comboList)
                 {
                     GameBoardObject middleObject = combination[combination.Count / 2];
@@ -143,21 +146,24 @@ namespace Match3
                     }
                     objectList.Remove(middleObject);
                     objectList.Add(newObject);
+                    objectsChanged++;
                 }
+                Debug.WriteLine($"Objects changed: {objectsChanged}");
                 comboList = GetComboList();
+                iteration++;
             }
 
-            TurnIntoSquare(new Vector2Int(5, 2));
-            TurnIntoBomb(new Vector2Int(5, 2));
-            TurnIntoSquare(new Vector2Int(4, 2));
+            //TurnIntoSquare(new Vector2Int(5, 2));
+            //TurnIntoBomb(new Vector2Int(5, 2));
+            //TurnIntoSquare(new Vector2Int(4, 2));
 
-            TurnIntoSquare(new Vector2Int(2, 3));
-            TurnIntoSquare(new Vector2Int(3, 3));
-            TurnIntoSquare(new Vector2Int(4, 3));
-            TurnIntoSquare(new Vector2Int(6, 3));
+            //TurnIntoSquare(new Vector2Int(2, 3));
+            //TurnIntoSquare(new Vector2Int(3, 3));
+            //TurnIntoSquare(new Vector2Int(4, 3));
+            //TurnIntoSquare(new Vector2Int(6, 3));
 
-            TurnIntoSquare(new Vector2Int(4, 4));
-            TurnIntoSquare(new Vector2Int(5, 4));
+            //TurnIntoSquare(new Vector2Int(4, 4));
+            //TurnIntoSquare(new Vector2Int(5, 4));
 
         }
 
@@ -190,6 +196,17 @@ namespace Match3
         {
             GameBoardObject obj = GetObjectAtPosition(pos);
             BombBonus bomb = new BombBonus(obj, obj.worldPos, obj.worldPos);
+            objectList.Remove(obj);
+            objectList.Add(bomb);
+        }
+
+        /// <summary>
+        /// Превращает объект в заданной позиции в Line.
+        /// </summary>
+        public void TurnIntoLine(Vector2Int pos)
+        {
+            GameBoardObject obj = GetObjectAtPosition(pos);
+            LineBonus bomb = new LineBonus(obj, true, obj.worldPos, obj.worldPos);
             objectList.Remove(obj);
             objectList.Add(bomb);
         }
