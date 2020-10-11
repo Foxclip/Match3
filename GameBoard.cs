@@ -121,17 +121,6 @@ namespace Match3
                 }
             }
 
-            ////////////////////////////////////
-            //GameBoardObject gameBoardObject = GetObjectAtPosition(3, 3);
-            //objectList.Remove(gameBoardObject);
-            //LineBonus lineBonus = new LineBonus(gameBoardObject, true, gameBoardObject.worldPos, gameBoardObject.worldPos);
-            //objectList.Add(lineBonus);
-
-            //GameBoardObject gameBoardObject2 = GetObjectAtPosition(3, 6);
-            //objectList.Remove(gameBoardObject2);
-            //LineBonus lineBonus2 = new LineBonus(gameBoardObject2, false, gameBoardObject2.worldPos, gameBoardObject2.worldPos);
-            //objectList.Add(lineBonus2);
-
             // Удаление комбинаций образовавшихся после случайной генерации объектов
             ComboList comboList = GetComboList();
             while(comboList.Count > 0)
@@ -154,6 +143,25 @@ namespace Match3
                 comboList = GetComboList();
             }
 
+            //////////////////////////////////
+            //SetObjectAtPosition(new Vector2Int(3, 2), new SquareObject(new Vector2Int(3, 2), new Vector2Int(3, 2)));
+            //SetObjectAtPosition(new Vector2Int(3, 4), new SquareObject(new Vector2Int(3, 4), new Vector2Int(3, 4)));
+            //SetObjectAtPosition(new Vector2Int(3, 3), new SquareObject(new Vector2Int(3, 3), new Vector2Int(3, 3)));
+            //SetObjectAtPosition(new Vector2Int(4, 3), new SquareObject(new Vector2Int(4, 3), new Vector2Int(4, 3)));
+            //SetObjectAtPosition(new Vector2Int(5, 3), new SquareObject(new Vector2Int(5, 3), new Vector2Int(5, 3)));
+            //SetObjectAtPosition(new Vector2Int(6, 3), new SquareObject(new Vector2Int(6, 3), new Vector2Int(6, 3)));
+            //SetObjectAtPosition(new Vector2Int(7, 3), new SquareObject(new Vector2Int(7, 3), new Vector2Int(7, 3)));
+
+        }
+
+        /// <summary>
+        /// Устанавливает объект в определенной позиции.
+        /// </summary>>
+        public void SetObjectAtPosition(Vector2Int position, GameBoardObject newObject)
+        {
+            GameBoardObject oldObject = GetObjectAtPosition(position);
+            objectList.Remove(oldObject);
+            objectList.Add(newObject);
         }
 
         /// <summary>
@@ -199,7 +207,7 @@ namespace Match3
                             gameBoardObject,
                             beginScale: 1.0,
                             endScale: 0.0,
-                            delay: 0.1,
+                            delay: 0.0,
                             blocking: true,
                             finishedCallback: _ => objectList.Remove(gameBoardObject)
                         );
@@ -242,10 +250,15 @@ namespace Match3
         /// <param name="pos">Клетка игрового поля.</param>
         public GameBoardObject GetObjectAtPosition(Vector2Int pos)
         {
+            string foundObjectsString = "";
             List<GameBoardObject> foundObjects = objectList.FindAll(obj => obj.worldPos == pos && !implodingObjects.Contains(obj));
+            foreach(GameBoardObject obj in foundObjects)
+            {
+                foundObjectsString += obj.ToString() + ", ";
+            }
             if(foundObjects.Count > 1)
             {
-                throw new InvalidOperationException($"В клетке {pos} найдено объектов: {foundObjects.Count}");
+                throw new InvalidOperationException($"В клетке {pos} найдено объектов: {foundObjects.Count} {foundObjectsString}");
             }
             else if(foundObjects.Count == 1)
             {
@@ -578,28 +591,15 @@ namespace Match3
         /// </summary>
         public void DeleteCombos(ComboList comboList)
         {
-            // Бонус Line
-            ComboList combinationsOf4 = comboList.FindAll(combination => combination.Count == 4);
-            List<GameBoardObject> combination = combinationsOf4.Find(combination => combination.Contains(objectSwap2));
-            if(combination != null)
-            {
-                Debug.WriteLine($"Creating line bonus in {objectSwap2.worldPos}");
-                bool vertical = combination[0].worldPos.x == combination[1].worldPos.x;
-                // Создаем объект
-                LineBonus newLineBonus = new LineBonus(objectSwap2, vertical, objectSwap2.worldPos, objectSwap2.worldPos);
-                objectList.Add(newLineBonus);
-                // Запускаем анимацию появления
-                ScaleAnimation spawnAnimation = new ScaleAnimation(newLineBonus, 0.0, 1.0, blocking: true);
-                activeAnimations.Add(spawnAnimation);
-            }
-
             // Бонус Bomb
             // Комбинации из 5 и более
+            List<Vector2Int> newBombPositions = new List<Vector2Int>();
             ComboList combinationsOf5AndMore = comboList.FindAll(combination => combination.Count >= 5);
-            combination = combinationsOf5AndMore.Find(combination => combination.Contains(objectSwap2));
+            List<GameBoardObject> combination = combinationsOf5AndMore.Find(combination => combination.Contains(objectSwap2));
             if(combination != null)
             {
                 CreateBombBonus(objectSwap2);
+                newBombPositions.Add(objectSwap2.worldPos);
             }
             // Перекрестные комбинации из 3 и более
             CrossList crosses = new CrossList();
@@ -613,9 +613,27 @@ namespace Match3
                     if(intersection.Count > 0)
                     {
                         GameBoardObject objectAtIntersection = intersection[0];
-                        CreateBombBonus(objectAtIntersection);
+                        if(!newBombPositions.Contains(objectAtIntersection.worldPos))
+                        {
+                            CreateBombBonus(objectAtIntersection);
+                            newBombPositions.Add(objectAtIntersection.worldPos);
+                        }
                     }
                 }
+            }
+            // Бонус Line
+            ComboList combinationsOf4 = comboList.FindAll(combination => combination.Count == 4);
+            combination = combinationsOf4.Find(combination => combination.Contains(objectSwap2));
+            if(combination != null && !newBombPositions.Contains(objectSwap2.worldPos))
+            {
+                Debug.WriteLine($"Creating line bonus in {objectSwap2.worldPos}");
+                bool vertical = combination[0].worldPos.x == combination[1].worldPos.x;
+                // Создаем объект
+                LineBonus newLineBonus = new LineBonus(objectSwap2, vertical, objectSwap2.worldPos, objectSwap2.worldPos);
+                objectList.Add(newLineBonus);
+                // Запускаем анимацию появления
+                ScaleAnimation spawnAnimation = new ScaleAnimation(newLineBonus, 0.0, 1.0, blocking: true);
+                activeAnimations.Add(spawnAnimation);
             }
 
             // Список удаляемых объектов
