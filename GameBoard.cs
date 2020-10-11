@@ -387,13 +387,14 @@ namespace Match3
                 objectList.Add(newLineBonus);
             }
 
+            // Запуск анимации исчезновения
             List<GameBoardObject> objectsToDelete = comboList.SelectMany(tempList => tempList).ToList();
             implodingObjects.Clear();
             score += objectsToDelete.Count;
             foreach(GameBoardObject obj in objectsToDelete)
             {
                 implodingObjects.Add(obj);
-                ImplodeAnimation implodeAnimation = new ImplodeAnimation(obj, 1.0, 0.0, blocking: true);
+                ScaleAnimation implodeAnimation = new ScaleAnimation(obj, 1.0, 0.0, blocking: true);
                 activeAnimations.Add(implodeAnimation);
             }
         }

@@ -7,7 +7,7 @@ using Vector2 = Microsoft.Xna.Framework.Vector2;
 
 namespace Match3
 {
-    public class ImplodeAnimation : Animation
+    public class ScaleAnimation : Animation
     {
         /// <summary>
         /// Нелинейное изменение размера: при значениях >1 анимация замедляется, при <1 - ускоряется
@@ -27,7 +27,7 @@ namespace Match3
         /// </summary>
         /// <param name="linkedObject">Привязанный обеъект на игровом поле.</param>
         /// <param name="blocking">Блокирует ли анимация переход в следующее состояние игры.</param>
-        public ImplodeAnimation(GameBoardObject linkedObject, double beginScale, double endScale, bool blocking = false)
+        public ScaleAnimation(GameBoardObject linkedObject, double beginScale, double endScale, bool blocking = false)
         {
             this.linkedObject = linkedObject;
             this.beginScale = beginScale;
@@ -63,7 +63,7 @@ namespace Match3
         /// </summary>
         public override void OnDelete()
         {
-            linkedObject.spriteAnimatedScale = 0.0f;
+            linkedObject.spriteAnimatedScale = (float)endScale;
             active = false;
         }
     }
